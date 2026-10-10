@@ -1,0 +1,40 @@
+{
+  "_readme": "Fuller example showing every input type. Copy the parts you need into allowlist.config.json.",
+  "chain": { "rpc": "https://rpc.testnet.chain.robinhood.com", "id": 46630 },
+
+  "wallets": [
+    "0x1111111111111111111111111111111111111111",
+    "0x2222222222222222222222222222222222222222"
+  ],
+
+  "walletsFiles": [
+    "inputs/team-wallets.txt",
+    "inputs/partners.csv"
+  ],
+
+  "collections": [
+    {
+      "name": "GatedProjectA (exported holders)",
+      "address": "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "holdersFile": "inputs/projectA-holders.csv",
+      "_note": "holdersFile skips the on-chain scan. Export from Alchemy / Reservoir / OpenSea / Dune, one address per line or first CSV column."
+    },
+    {
+      "name": "GatedProjectB (on-chain snapshot)",
+      "address": "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "standard": "erc721",
+      "minBalance": 1,
+      "rpc": "https://rpc.testnet.chain.robinhood.com",
+      "fromBlock": 0,
+      "toBlock": "latest",
+      "chunk": 5000,
+      "_note": "On-chain snapshot replays Transfer logs. Needs an RPC that serves that history (archival). If the project lives on another chain, set 'rpc' to that chain and its deploy block in 'fromBlock'. If history is pruned, prefer holdersFile."
+    }
+  ],
+
+  "exclude": [
+    "0x000000000000000000000000000000000000dEaD"
+  ],
+
+  "output": "../web/allowlist.json"
+}

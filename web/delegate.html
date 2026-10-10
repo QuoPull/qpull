@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Same allowlist-only CSP as index.html, minus fonts.googleapis.com:
+     script -> cdn.jsdelivr.net (pinned ethers 6.13.4 UMD, SRI-checked), style -> inline only (the @font-face
+     rules are inlined below, so no stylesheet request), font -> fonts.gstatic.com, img -> 'self' + data:,
+     connect -> 'self' (allowlist.json) + the domain-locked Alchemy read endpoint + the public RH RPC (its fallback)
+     + Coinbase Wallet's RPC proxy. Wallet writes go through the injected provider, and most wallets relay its calls
+     to their extension, out of this page's CSP. Coinbase Wallet's extension does not: its in-page provider answers
+     read calls itself by fetching chain-proxy.wallet.coinbase.com from this page, and ethers' sendTransaction opens
+     with eth_blockNumber, so without that entry every Coinbase Wallet mint and delegation died with "Failed to
+     fetch" before the wallet opened (reported on mint day). Everything else is default-src 'none'.
+     Defence in depth: script-src names the one pinned ethers file, not the whole jsdelivr host. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js; style-src 'self' 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://robinhood-mainnet.g.alchemy.com https://rpc.mainnet.chain.robinhood.com https://chain-proxy.wallet.coinbase.com; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<script>if(window.top!==window.self){try{window.top.location=window.self.location}catch(e){document.documentElement.innerHTML=''}}</script>
+<title>QuoPull · delegate your mint</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="Delegate your Art Pass mint to a fresh hot wallet, scoped so it can touch nothing else. Swap. Rip. Claim. On Robinhood Chain.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QuoPull">
+<meta property="og:title" content="QuoPull · delegate your mint">
+<meta property="og:description" content="Delegate your Art Pass mint to a fresh hot wallet, scoped so it can touch nothing else. Swap. Rip. Claim. On Robinhood Chain.">
+<meta property="og:url" content="https://www.quopull.fun/">
+<meta property="og:image" content="https://www.quopull.fun/og-srclaim.png">
+<meta property="og:image:secure_url" content="https://www.quopull.fun/og-srclaim.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QuoPull">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="QuoPull · delegate your mint">
+<meta name="twitter:description" content="Delegate your Art Pass mint to a fresh hot wallet, scoped so it can touch nothing else. Swap. Rip. Claim. On Robinhood Chain.">
+<meta name="twitter:image" content="https://www.quopull.fun/og-srclaim.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20400'%3E%3Crect%20width='400'%20height='400'%20rx='88'%20fill='%23E6E4DC'/%3E%3Cpath%20d='M234.17,297.89%20C219.23,288.47%20207.00,280.44%20207.00,280.05%20C207.00,278.65%20230.12,264.95%20231.31,265.65%20C235.62,268.17%20307.69,313.49%20308.45,314.16%20C308.97,314.62%20298.59,315.00%20285.37,315.00%20L261.33,315.00%20L234.17,297.89%20Z%20M112.00,276.02%20L69.50,249.16%20L69.50,194.50%20L69.50,139.83%20L112.87,112.52%20L156.23,85.20%20L173.87,96.25%20C183.56,102.32%20191.84,107.59%20192.26,107.96%20C192.91,108.52%20171.15,123.00%20169.65,123.00%20C169.36,123.00%20166.22,121.18%20162.67,118.96%20L156.23,114.92%20L125.11,134.54%20L94.00,154.16%20L94.00,192.50%20L94.00,230.85%20L125.09,250.46%20L156.18,270.07%20L187.59,250.31%20L219.00,230.55%20L219.00,191.74%20L219.00,152.93%20L212.47,148.84%20L205.95,144.74%20L217.72,137.43%20C224.20,133.40%20229.88,130.01%20230.35,129.89%20C230.82,129.77%20234.31,131.61%20238.10,133.99%20L245.00,138.32%20L245.00,192.97%20L245.00,247.62%20L201.02,275.31%20C176.82,290.54%20156.46,302.97%20155.77,302.94%20C155.07,302.91%20135.38,290.80%20112.00,276.02%20Z%20M261.18,276.55%20C254.95,272.54%20249.46,268.86%20248.97,268.37%20C248.46,267.86%20259.58,260.25%20275.29,250.35%20L302.50,233.20%20L302.76,193.80%20L303.02,154.39%20L272.54,135.21%20C255.78,124.66%20241.64,115.90%20241.13,115.76%20C240.61,115.62%20226.20,124.28%20209.10,135.00%20L178.02,154.50%20L178.01,192.64%20L178.00,230.77%20L185.05,235.03%20C188.93,237.38%20191.74,239.60%20191.30,239.97%20C190.15,240.95%20171.92,252.44%20169.30,253.84%20C167.37,254.87%20166.21,254.45%20160.05,250.46%20L153.00,245.90%20L153.03,193.70%20L153.06,141.50%20L196.78,114.02%20C220.83,98.91%20241.40,86.55%20242.50,86.56%20C243.60,86.57%20263.74,98.71%20287.25,113.54%20L330.00,140.50%20L329.75,194.49%20L329.50,248.48%20L301.50,266.21%20C286.10,275.97%20273.27,283.92%20273.00,283.90%20C272.73,283.87%20267.40,280.56%20261.18,276.55%20Z'%20fill='%23D32F24'%20fill-rule='evenodd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTq9wXulPFk.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Fonts: inlined from Google Fonts css2?family=Archivo:wght@100..900&family=Martian+Mono:wght@300..700&display=swap
+   (2026-09-16). Inlining removes the render-blocking stylesheet request, and the two latin files are preloaded above.
+   Only the regular width and upright style are used, so the width axis and italics are not requested: that cut
+   Archivo's file from 90 KB to 35 KB. If you change the families or axes, re-copy this block and both preload URLs. */
+/* vietnamese */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLySOxKsv4RnUPU.woff2) format('woff2');unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;}
+/* latin-ext */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLyTOxKsv4RnUPU.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+/* latin */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+/* cyrillic-ext */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTe9wXulPFlwYA.woff2) format('woff2');unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;}
+/* cyrillic */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaT69wXulPFlwYA.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+/* latin-ext */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTS9wXulPFlwYA.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+/* latin */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTq9wXulPFk.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+</style>
+<style>
+:root{
+  --stock:#E6E4DC; --stock-deep:#DCD9CF; --stock-edge:#C9C5B8;
+  --card:#F3F1EB;
+  --ink:#14161A; --ink-soft:#5C5C57; --ink-faint:#918D80;
+  --accent:#D6321F;
+  --good:#2f7d55; --warn:#B26A00;
+  --holder:#27509E; --lead:#4A7C59;   /* tier pills, same values as docs.html */
+  --mono:"Martian Mono",ui-monospace,monospace;
+  --sans:"Archivo",system-ui,sans-serif;
+  --gut:clamp(16px,3.4vw,44px);
+}
+[data-theme="dark"]{
+  --stock:#101215; --stock-deep:#181B20; --stock-edge:#2A2E35;
+  --card:#1E222A;
+  --ink:#E8E6DE; --ink-soft:#A5A29A; --ink-faint:#7A776F;
+  --accent:#E8563F;
+  --good:#7ed492; --warn:#E0A24A;
+  --holder:#6f9bd8; --lead:#7ed492;
+}
+[data-theme="dark"] body::before{opacity:.30}
+[data-theme="dark"] .topbar{box-shadow:0 6px 16px -12px rgba(0,0,0,.9)}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+body{margin:0; background:var(--stock); color:var(--ink); font-family:var(--sans);
+  font-variation-settings:"wdth" 100,"wght" 400; font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased}
+body::before{content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:radial-gradient(var(--stock-edge) .5px,transparent .5px); background-size:4px 4px; opacity:.4}
+.wrap{position:relative; z-index:1; max-width:1180px; margin:0 auto; padding-inline:var(--gut)}
+a{color:inherit}
+.lbl{font-family:var(--mono); font-size:9.5px; font-weight:500; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint)}
+
+.btn{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; padding:11px 18px;
+  border:1px solid var(--ink); background:var(--ink); color:var(--stock); text-decoration:none; cursor:pointer;
+  display:inline-block; transition:transform .12s ease}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent; color:var(--ink); border-color:var(--ink-faint)}
+.btn.ghost:hover{border-color:var(--ink)}
+.btn.sm{padding:8px 13px; font-size:9.5px}
+.btn.block{display:block; width:100%; text-align:center}
+.btn[disabled]{opacity:.32; cursor:default; transform:none}
+.btn:focus-visible,button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+
+/* ---------- top bar ---------- */
+#card-delegate,#card-holder{scroll-margin-top:96px}
+.pub-only{display:none !important}
+body.public-mode .pub-only{display:revert !important}
+body.public-mode .nopub{display:none !important}
+body.public-mode .mc-ph:not(.on){opacity:.55; text-decoration:line-through}
+.facts{display:grid}
+.fact{display:grid; grid-template-columns:110px 1fr; gap:14px; padding:12px 0; border-bottom:1px solid var(--stock-edge); align-items:baseline}
+.fact:last-child{border-bottom:none}
+.fact .k{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft)}
+.fact .v{font-size:14.5px; line-height:1.45}
+.fact code{font-family:var(--mono); font-size:11.5px; word-break:break-all}
+/* rarity tier table, same markup and colours as the docs page */
+.spec{width:100%; border-collapse:collapse; margin:2px 0 0; font-size:13px; border:1px solid var(--stock-edge)}
+.spec th,.spec td{text-align:left; padding:7px 10px; border-bottom:1px solid var(--stock-edge); vertical-align:middle}
+.spec tr:last-child td{border-bottom:none}
+.spec thead th{font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); background:var(--stock-deep)}
+.spec .num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.spec td:first-child{white-space:nowrap}
+.pill{display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border:1px solid currentColor; border-radius:2px}
+.pill.c{color:var(--ink-faint)} .pill.u{color:var(--lead)} .pill.r{color:var(--holder)} .pill.s{color:#B8860B}
+[data-theme="dark"] .pill.s{color:#E8B65A}
+.fact.wide{grid-template-columns:1fr; gap:8px}
+.fact[hidden]{display:none}  /* .fact sets display:grid, which would beat the UA rule for [hidden] */
+/* once the beacon lands the mint is history: the delegate/revoke pointer goes with it. !important because
+   .pub-only itself uses display:revert !important, which a plain rule or the [hidden] attribute cannot beat. */
+body.revealed .revoke-note{display:none !important}
+.revoke-note{font-family:var(--mono); font-size:10.5px; letter-spacing:.04em; color:var(--ink-soft); margin:0 0 30px}
+.revoke-note a{color:inherit} /* in-page jumps land clear of the sticky topbar */
+.ways{display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--ink); margin:18px 0 6px}
+.way{display:flex; flex-direction:column; gap:6px; padding:16px 18px; color:var(--ink); text-decoration:none; background:var(--stock-deep)}
+.way + .way{border-left:1px solid var(--ink)}
+.way.primary{background:var(--ink); color:var(--stock)}
+.way-k{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent)}
+.way b{font-size:19px; font-variation-settings:"wdth" 110,"wght" 760}
+.way-t{font-size:14px; line-height:1.45; opacity:.85}
+.way-go{margin-top:4px; font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; text-decoration:underline}
+.way:hover .way-go,.way:focus-visible .way-go{text-decoration:none}
+.steps-cap{margin:22px 0 -12px; font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; color:var(--ink-soft)}
+.wmenu{position:fixed; z-index:60; min-width:230px; max-width:calc(100vw - 16px); display:flex; flex-direction:column; padding:6px;
+  background:var(--stock); border:1px solid var(--ink); box-shadow:0 12px 26px -14px rgba(0,0,0,.45)}
+.wmenu .wm-addr{font-family:var(--mono); font-size:10px; color:var(--ink-soft); padding:8px 10px 10px; word-break:break-all;
+  border-bottom:1px solid var(--stock-edge); margin-bottom:4px}
+.wmenu button,.wmenu a{all:unset; box-sizing:border-box; display:flex; align-items:center; width:100%; min-height:42px; padding:0 10px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink); cursor:pointer}
+.wmenu button:hover,.wmenu a:hover,.wmenu button:focus-visible,.wmenu a:focus-visible{background:var(--stock-deep)}
+.wmenu .wm-danger{color:var(--accent)}
+@media (max-width:640px){ .ways{grid-template-columns:1fr} .way + .way{border-left:0; border-top:1px solid var(--ink)} }
+.topbar{position:sticky; top:0; z-index:40; background:var(--stock); border-bottom:1px solid var(--ink);
+  box-shadow:0 6px 14px -12px rgba(20,22,26,.5)}
+.topbar-in{display:flex; align-items:center; gap:26px; padding-block:14px}
+.mark{font-variation-settings:"wdth" 125,"wght" 800; font-size:20px; letter-spacing:.005em; line-height:1;
+  display:inline-flex; align-items:center; gap:7px; color:var(--accent); text-decoration:none}
+.mark svg{width:27px; height:27px; color:var(--accent); flex:0 0 auto}
+.tnav{display:flex; gap:18px; list-style:none; margin:0; padding:0}
+.tnav a{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-soft); text-decoration:none; padding:3px 1px; border-bottom:1px solid transparent}
+.tnav a:hover{color:var(--ink); border-bottom-color:var(--accent)}
+.tnav a.on{color:var(--ink); border-bottom:2px solid var(--accent)}
+.spacer{margin-left:auto}
+.themebtn{width:34px; height:34px; padding:0; display:grid; place-items:center;
+  border:1px solid var(--ink-faint); background:transparent; color:var(--ink); cursor:pointer}
+.themebtn:hover{border-color:var(--ink)}
+.themebtn svg{width:16px; height:16px}
+.hamburger{display:none; width:38px; height:38px; padding:0; align-items:center; justify-content:center; background:transparent; border:1px solid var(--ink-faint); border-radius:9px; color:var(--ink); cursor:pointer}
+.hamburger:hover{border-color:var(--ink)}
+.hamburger svg{width:20px; height:20px}
+.hamburger .cls{display:none}
+.hamburger[aria-expanded="true"] .mnu{display:none}
+.hamburger[aria-expanded="true"] .cls{display:block}
+.themebtn .moon{display:none}
+[data-theme="dark"] .themebtn .sun{display:none}
+[data-theme="dark"] .themebtn .moon{display:block}
+
+/* ---------- intro band ---------- */
+.hero{padding:34px 0 8px}
+.eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent)}
+.hero h1{font-variation-settings:"wdth" 118,"wght" 800; font-size:clamp(28px,4.6vw,46px); line-height:1.02;
+  letter-spacing:-.02em; margin:.35em 0 .18em; text-wrap:balance}
+.hero p{max-width:60ch; color:var(--ink-soft); margin:0 0 6px; font-size:15.5px}
+.opengate{margin:22px 0 4px; border:1px solid var(--stock-edge); border-left:3px solid var(--accent);
+  background:var(--stock-deep); border-radius:11px; padding:18px 22px}
+.opengate .og-k{font-family:var(--mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent)}
+.opengate .og-when{display:block; font-size:15px; font-weight:700; margin-top:5px; color:var(--ink)}
+.opengate .og-cd{display:block; font-family:var(--mono); font-size:clamp(28px,5.4vw,44px); font-weight:700;
+  letter-spacing:.03em; color:var(--ink); margin:9px 0 7px; font-variant-numeric:tabular-nums; line-height:1}
+.opengate .og-note{font-size:12.5px; color:var(--ink-soft)}
+.opengate.open{border-left-color:#2e9e5b}
+.opengate.open .og-k{color:#2e9e5b}
+
+/* ---------- stepper ---------- */
+.steps{display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--ink); margin:22px 0 8px}
+.step{padding:14px 16px; border-right:1px solid var(--stock-edge); position:relative}
+.step:last-child{border-right:none}
+.step .n{font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:var(--accent)}
+.step h3{font-variation-settings:"wdth" 108,"wght" 700; font-size:14px; margin:5px 0 3px; letter-spacing:-.01em}
+.step p{margin:0; font-size:12.5px; color:var(--ink-soft); line-height:1.45}
+.step .who{display:inline-block; margin-top:8px; font-family:var(--mono); font-size:8.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--ink-faint); border:1px solid var(--stock-edge); padding:2px 7px}
+
+/* ---------- deploy-pending banner ---------- */
+.pend{display:none; border:1px solid var(--accent); background:var(--card); padding:12px 15px; margin:16px 0;
+  font-family:var(--mono); font-size:11px; letter-spacing:.02em; line-height:1.6; color:var(--ink)}
+.pend.on{display:block}
+.pend b{color:var(--accent)}
+
+/* ---------- mint window clock ---------- */
+.mintclock{border:1px solid var(--ink); background:var(--stock-deep); margin:16px 0; display:flex; flex-wrap:wrap}
+.mc-phases{display:flex; flex:1 1 260px}
+.mc-ph{flex:1; text-align:center; padding:10px 6px; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint); border-right:1px solid var(--stock-edge)}
+.mc-ph:last-child{border-right:none}
+.mc-ph.on{color:var(--stock); background:var(--accent)}
+.mc-count{padding:10px 16px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink); display:flex; align-items:center; gap:6px; border-left:1px solid var(--ink)}
+.mc-count b{font-variant-numeric:tabular-nums; color:var(--accent)}
+.mc-minted{padding:10px 16px; font-family:var(--mono); font-size:11px; letter-spacing:.04em; color:var(--ink-soft); display:flex; align-items:center; gap:6px; border-left:1px solid var(--stock-edge)}
+.mc-minted b{font-variant-numeric:tabular-nums; color:var(--ink)}
+@media (max-width:560px){ .mc-count,.mc-minted{border-left:none; border-top:1px solid var(--stock-edge); width:100%; justify-content:center} }
+
+/* ---------- "not a sign-in" explainer ---------- */
+.explain{border:1px solid var(--ink); background:var(--stock-deep); margin:22px 0 8px}
+.explain-hd{display:flex; align-items:baseline; gap:12px; padding:12px 16px; border-bottom:1px solid var(--stock-edge); flex-wrap:wrap}
+.explain-hd .k{font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent)}
+.explain-hd h3{font-variation-settings:"wdth" 110,"wght" 700; font-size:15.5px; margin:0; letter-spacing:-.01em}
+.explain-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--stock-edge)}
+.ex{padding:14px 16px; background:var(--stock-deep)}
+/* a final row left short would show the grid's edge colour as an empty cell: let the last panel fill it */
+.ex:last-child:nth-child(3n+2){grid-column:span 2}
+.ex .t{font-family:var(--mono); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--good);
+  display:flex; align-items:center; gap:7px; margin-bottom:7px}
+.ex .t svg{width:13px; height:13px; flex:0 0 auto; stroke:var(--good); fill:none; stroke-width:2}
+.ex p{margin:0; font-size:12.5px; color:var(--ink-soft); line-height:1.5}
+.ex p b{color:var(--ink); font-weight:600}
+
+/* one-line "what this button signs" note under each primary action */
+.signnote{display:flex; gap:8px; font-family:var(--mono); font-size:9px; letter-spacing:.03em; color:var(--ink-faint);
+  line-height:1.55; margin-top:10px}
+.signnote svg{width:13px; height:13px; flex:0 0 auto; margin-top:1px; stroke:var(--ink-faint); fill:none; stroke-width:1.7}
+.signnote b{color:var(--ink-soft); font-weight:600}
+
+/* ---------- role columns ---------- */
+.cols{display:grid; grid-template-columns:1fr 1fr; gap:clamp(18px,2.4vw,30px); align-items:start; padding:8px 0 30px}
+.panel{border:1px solid var(--ink); background:var(--stock-deep)}
+.panel-head{display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid var(--ink); flex-wrap:wrap}
+.panel-head .role{font-family:var(--mono); font-size:8.5px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--stock); background:var(--ink); padding:3px 8px}
+.panel-head h2{font-variation-settings:"wdth" 110,"wght" 700; font-size:16px; letter-spacing:-.015em; margin:0}
+.panel-body{padding:16px}
+.hint{font-size:13px; color:var(--ink-soft); margin:0 0 14px; line-height:1.5}
+
+.field{margin:0 0 14px}
+.field > label{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--ink-faint); margin-bottom:6px}
+.inp{width:100%; font-family:var(--mono); font-size:13px; padding:11px 12px; background:var(--card); color:var(--ink);
+  border:1px solid var(--ink-faint); outline:none}
+.inp:focus{border-color:var(--ink)}
+.inp.bad{border-color:var(--accent)}
+.fielderr{font-family:var(--mono); font-size:9.5px; color:var(--accent); margin-top:5px; min-height:12px; letter-spacing:.02em}
+
+/* status readouts */
+.status{display:flex; align-items:center; gap:9px; font-family:var(--mono); font-size:11px; letter-spacing:.02em;
+  padding:10px 12px; border:1px solid var(--stock-edge); background:var(--card); margin:0 0 14px}
+.status .pip{width:7px; height:7px; border-radius:50%; background:var(--ink-faint); flex:0 0 auto}
+.status.good .pip{background:var(--good)} .status.good{color:var(--good)}
+.status.bad .pip{background:var(--accent)} .status.bad{color:var(--accent)}
+.status.wait{color:var(--ink-soft)}
+
+/* scope selector */
+.scope{border:1px solid var(--stock-edge); background:var(--card); margin:0 0 14px}
+.scope .opt{display:flex; gap:10px; padding:11px 12px; cursor:pointer; border-bottom:1px solid var(--stock-edge)}
+.scope .opt:last-child{border-bottom:none}
+.scope .opt input{margin-top:3px; accent-color:var(--accent); flex:0 0 auto}
+.scope .opt .t{font-family:var(--mono); font-size:11px; letter-spacing:.03em; font-weight:600}
+.scope .opt .d{font-size:12px; color:var(--ink-soft); line-height:1.45; margin-top:2px}
+.scope .opt.rec .t::after{content:"RECOMMENDED"; font-size:8px; letter-spacing:.12em; color:var(--good);
+  border:1px solid var(--good); padding:1px 5px; margin-left:8px; vertical-align:middle}
+.scope .opt.risk{display:none}
+.scope .opt.risk.shown{display:flex}
+.allwarn{display:none; border-left:3px solid var(--accent); background:var(--card); padding:9px 12px; margin:0 0 14px;
+  font-family:var(--mono); font-size:10px; line-height:1.6; color:var(--ink)}
+.allwarn.on{display:block} .allwarn b{color:var(--accent)}
+.showall{background:none; border:none; color:var(--ink-faint); font-family:var(--mono); font-size:9px; letter-spacing:.08em;
+  text-transform:uppercase; cursor:pointer; padding:10px 0; margin:-10px 0 4px; text-decoration:underline}
+/* the padding makes an 11px-tall link a ~31px tap target on phones; the negative margin cancels it, so nothing moves */
+.showall:hover{color:var(--accent)}
+
+/* qty stepper */
+.qtyrow{display:flex; align-items:center; gap:12px; margin:0 0 14px}
+.qtybox{display:flex; align-items:center; border:1px solid var(--ink-faint); background:var(--card)}
+.qtybox button{width:38px; height:38px; border:none; background:none; color:var(--ink); font-size:18px; cursor:pointer; font-family:var(--mono)}
+.qtybox button:hover{background:var(--stock-deep)}
+.qtybox .v{min-width:44px; text-align:center; font-family:var(--mono); font-size:15px; font-variant-numeric:tabular-nums}
+.qtyrow .cap{font-family:var(--mono); font-size:10px; color:var(--ink-soft); letter-spacing:.03em}
+
+/* vault list (delegate side) */
+.vaults{margin:0 0 14px; border:1px solid var(--stock-edge)}
+.vault{display:flex; align-items:center; gap:10px; padding:11px 12px; border-bottom:1px solid var(--stock-edge); cursor:pointer}
+.vault:last-child{border-bottom:none}
+.vault input{accent-color:var(--accent)}
+.vault .va{font-family:var(--mono); font-size:12px; font-variant-numeric:tabular-nums}
+.vault .meta{margin-left:auto; text-align:right}
+.vault .tag{font-family:var(--mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--stock-edge); color:var(--ink-soft)}
+.vault .tag.all{color:var(--warn); border-color:var(--warn)}
+.vault .rem{display:block; font-family:var(--mono); font-size:9.5px; color:var(--ink-soft); margin-top:3px}
+.vempty{padding:16px 12px; font-family:var(--mono); font-size:11px; color:var(--ink-soft); line-height:1.6; text-align:center}
+
+/* outgoing delegation list (holder side) */
+.deleg{margin:14px 0 0; border-top:1px solid var(--stock-edge); padding-top:12px}
+.deleg .dh{font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px}
+.drow{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--stock-edge)}
+.drow:last-child{border-bottom:none}
+.drow .da{font-family:var(--mono); font-size:11px; font-variant-numeric:tabular-nums}
+.drow .dt{font-family:var(--mono); font-size:8px; letter-spacing:.1em; text-transform:uppercase; padding:2px 6px; border:1px solid var(--stock-edge); color:var(--ink-soft)}
+.drow .dt.all{color:var(--warn); border-color:var(--warn)}
+.drow .rv{margin-left:auto}
+
+/* intent + verify (shared with index.html) */
+.intent{display:block; text-align:left; border:1px solid var(--ink); background:var(--card); padding:12px 13px; margin:0 0 14px}
+.intent b{display:block; font-family:var(--sans); font-variation-settings:"wdth" 105,"wght" 700; font-size:13.5px; margin-bottom:6px}
+.intent .i-amt{display:block; font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums; color:var(--accent); margin-bottom:6px}
+.intent .i-row{display:block; font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; color:var(--ink-soft); margin-top:3px}
+.intent .i-row a{color:var(--ink-soft); text-decoration:underline}
+.intent .i-row a:hover{color:var(--accent)}
+.intent .i-chk{display:block; font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-top:8px}
+.intent:empty{display:none}
+
+.addr-verify{border:1px solid var(--stock-edge); background:var(--stock-deep); padding:11px 13px; margin:22px 0 40px}
+.addr-verify .av-hd{display:block; font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px}
+.addr-verify .av-r{display:flex; justify-content:space-between; gap:10px; padding:3px 0}
+.addr-verify .av-k{font-family:var(--mono); font-size:9.5px; letter-spacing:.05em; color:var(--ink-soft)}
+.addr-verify .av-v{font-family:var(--mono); font-size:9.5px; font-variant-numeric:tabular-nums; color:var(--ink); text-decoration:none;
+  padding:6px 0; margin:-6px 0} /* a taller tap target for the explorer links; the negative margin keeps the rows where they were */
+.addr-verify .av-v:hover{color:var(--accent)}
+.addr-verify .av-warn{display:block; font-family:var(--mono); font-size:9px; line-height:1.6; color:var(--ink-faint); margin-top:9px}
+
+/* toast */
+.toast{min-height:20px; font-family:var(--mono); font-size:11px; letter-spacing:.02em; margin:2px 0 12px; line-height:1.6}
+.toast .ok{color:var(--good)} .toast .bad{color:var(--accent)} .toast .mut{color:var(--ink-soft)}
+.toast a{color:var(--ink-soft); text-decoration:underline}
+.toast .share-x{display:inline-block; margin:6px 0 0 8px; padding:8px 12px; border:1px solid var(--ink); color:var(--ink);
+  text-decoration:none; font-size:10px; letter-spacing:.1em; text-transform:uppercase; line-height:1.2}
+.toast .share-x:hover, .toast .share-x:focus-visible{background:var(--ink); color:var(--card)}
+.toast .wopen{display:inline-flex; align-items:center; min-height:44px; margin:8px 8px 4px 0; padding:0 16px; border:1px solid var(--ink);
+  color:var(--ink); text-decoration:none; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; line-height:1.2}
+.toast .wopen:hover, .toast .wopen:focus-visible{background:var(--ink); color:var(--card)}
+/* A status line directly under the control that wrote it, so the message is on screen where the click was */
+.toast.local{margin:10px 0 0; min-height:0}
+.toast.local:empty{display:none}
+.btn.risk:not([disabled]){background:var(--accent); border-color:var(--accent); color:#fff}
+/* The wallet is on another network */
+.chip.wrongnet{border-color:var(--accent)}
+.chip.wrongnet b{color:var(--accent)}
+.opengate.closed{border-left-color:var(--ink-faint)}
+.opengate.closed .og-k{color:var(--ink-soft)}
+
+.chip{display:flex; align-items:center; gap:7px; padding:6px 12px; border:1px solid var(--stock-edge)}
+.dot{width:6px; height:6px; border-radius:50%; background:var(--accent)}
+@media (prefers-reduced-motion:no-preference){ .dot{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}} }
+.chip b{font-family:var(--mono); font-size:10px; font-weight:500; letter-spacing:.06em; font-variant-numeric:tabular-nums}
+
+footer{border-top:1px solid var(--stock-edge); padding:22px 0 40px; color:var(--ink-faint);
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.04em; line-height:1.7}
+
+@media (max-width:880px){
+  .cols{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .step{border-right:none; border-bottom:1px solid var(--stock-edge)}
+  .step:last-child{border-bottom:none}
+  .explain-grid{grid-template-columns:1fr}
+  .ex:last-child:nth-child(3n+2){grid-column:auto}
+}
+/* phones: collapse the nav + connect into a hamburger so the header never overflows */
+@media (max-width:640px){
+  .topbar-in{flex-wrap:wrap; gap:12px 16px; padding-block:11px}
+  .chip{display:none}
+  .hamburger{display:inline-flex}
+  .tnav{display:none}
+  #conn{display:none}
+  .topbar-in.menu-open .tnav{display:flex; order:5; width:100%; justify-content:center; gap:26px;
+    border-top:1px solid var(--stock-edge); padding-top:12px; margin-top:2px}
+  .topbar-in.menu-open .tnav{flex-wrap:wrap; row-gap:10px}
+  .topbar-in.menu-open .tnav a{font-size:12px; white-space:nowrap}
+  .topbar-in.menu-open #conn{display:block; order:6; width:100%; text-align:center}
+  .hero{padding-top:22px}
+  .hero h1{font-size:clamp(26px,8vw,40px)}
+}
+</style>
+</head>
+<body>
+<script src="/terms-gate.js"></script>
+<script src="/daily-checklist.js"></script>
+
+<header class="topbar">
+  <div class="wrap topbar-in" id="topbarIn">
+    <a class="mark" href="/delegate.html"><svg viewBox="69 85 260 229" aria-hidden="true"><path d="M234.17,297.89 C219.23,288.47 207.00,280.44 207.00,280.05 C207.00,278.65 230.12,264.95 231.31,265.65 C235.62,268.17 307.69,313.49 308.45,314.16 C308.97,314.62 298.59,315.00 285.37,315.00 L261.33,315.00 L234.17,297.89 Z M112.00,276.02 L69.50,249.16 L69.50,194.50 L69.50,139.83 L112.87,112.52 L156.23,85.20 L173.87,96.25 C183.56,102.32 191.84,107.59 192.26,107.96 C192.91,108.52 171.15,123.00 169.65,123.00 C169.36,123.00 166.22,121.18 162.67,118.96 L156.23,114.92 L125.11,134.54 L94.00,154.16 L94.00,192.50 L94.00,230.85 L125.09,250.46 L156.18,270.07 L187.59,250.31 L219.00,230.55 L219.00,191.74 L219.00,152.93 L212.47,148.84 L205.95,144.74 L217.72,137.43 C224.20,133.40 229.88,130.01 230.35,129.89 C230.82,129.77 234.31,131.61 238.10,133.99 L245.00,138.32 L245.00,192.97 L245.00,247.62 L201.02,275.31 C176.82,290.54 156.46,302.97 155.77,302.94 C155.07,302.91 135.38,290.80 112.00,276.02 Z M261.18,276.55 C254.95,272.54 249.46,268.86 248.97,268.37 C248.46,267.86 259.58,260.25 275.29,250.35 L302.50,233.20 L302.76,193.80 L303.02,154.39 L272.54,135.21 C255.78,124.66 241.64,115.90 241.13,115.76 C240.61,115.62 226.20,124.28 209.10,135.00 L178.02,154.50 L178.01,192.64 L178.00,230.77 L185.05,235.03 C188.93,237.38 191.74,239.60 191.30,239.97 C190.15,240.95 171.92,252.44 169.30,253.84 C167.37,254.87 166.21,254.45 160.05,250.46 L153.00,245.90 L153.03,193.70 L153.06,141.50 L196.78,114.02 C220.83,98.91 241.40,86.55 242.50,86.56 C243.60,86.57 263.74,98.71 287.25,113.54 L330.00,140.50 L329.75,194.49 L329.50,248.48 L301.50,266.21 C286.10,275.97 273.27,283.92 273.00,283.90 C272.73,283.87 267.40,280.56 261.18,276.55 Z" fill="currentColor" fill-rule="evenodd"/></svg>QuoPull</a>
+    <ul class="tnav">
+      <!-- Explicit .html paths, not "/" and "/docs": vercel.json rewrites "/" to /delegate in production,
+           but a plain static server maps "/" to index.html, so the Delegate link led to the MINT page
+           whenever the site was served locally. Vercel resolves the .html forms too (cleanUrls only ADDS
+           the extensionless alias), so these are correct in both places.
+           id="nav-app" is read at :876, which relabels this to "Packs" once nft.launched(). That code has
+           been shipping against an element that did not exist -- the guard made it a silent no-op.
+           Delegation-only phase: the item starts HIDDEN and is shown only once the page has read code at
+           the Art Pass address (_syncNav). Before that there is no mint anywhere, web/.vercelignore excludes
+           index.html, and with cleanUrls + the "/" -> /delegate rewrite the link led straight back to this page.
+           Mint day (2026-09-18): so it now jumps to the mint card on THIS page, where allowlisted wallets mint
+           directly and delegated hot wallets mint for their vaults. The "Delegate + Mint" item links /mint, which
+           vercel.json rewrites to /delegate (a plain local static server has no /mint; use /delegate.html there). -->
+      <li id="nav-app-li" hidden><a href="#card-delegate" id="nav-app">Mint</a></li>
+      <li class="nopub"><a href="/mint" class="on" id="nav-mint-d">Art Pass</a></li>
+      <li class="pub-only"><a href="/mint" class="on" id="nav-mint">Mint</a></li>
+      <li><a href="/docs.html">Docs</a></li>
+      <li class="pub-only"><a href="/terms.html">Terms</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <div class="chip"><span class="dot"></span><b id="chip">Robinhood Chain</b></div>
+    <!-- REFRESH. The page re-read loadMintClock on a 10s timer but refreshHolder/refreshDelegate ran only
+         on connect, so crossing a phase boundary (GTD -> overflow -> public) left eligibility, caps and
+         the vault list showing the PREVIOUS phase until a full page reload. On a mint page that is the
+         difference between "the site says I cannot mint" and a missed window. -->
+    <button class="themebtn" id="refreshBtn" aria-label="Refresh on-chain state" title="Refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 4"/><path d="M20 4v6h-6"/></svg>
+    </button>
+    <button class="themebtn" id="theme" aria-label="Switch colour theme" title="Switch theme">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z"/></svg>
+    </button>
+    <button class="btn" id="conn">Connect wallet</button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="topbarIn">
+      <svg class="mnu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow" id="hero-k">Art Pass mint</span>
+    <h1 id="hero-h1">Mint your Art Pass</h1>
+    <p class="pub-only" id="pub-lede">Anyone can mint now. Up to 20 passes per wallet, counting what that wallet minted in the allowlist windows, at 0.0075 ETH each.</p>
+    <p class="nopub">Connect your allowlisted wallet and mint straight from this page. Rather keep that wallet cold? Delegate a fresh hot wallet, scoped so it can touch nothing else, and mint from that one instead.</p>
+  </section>
+
+  <!-- Mint day (2026-09-18): people read this page as delegation-only and did not know an allowlisted wallet
+       can mint directly. Lead with the two routes, direct first, each jumping to its card. -->
+  <div class="ways nopub" id="ways">
+    <a class="way primary" href="#card-delegate">
+      <span class="way-k">Fastest</span>
+      <b>Mint directly</b>
+      <span class="way-t">Connect your allowlisted wallet and mint up to your cap. No delegation needed.</span>
+      <span class="way-go">Mint now &darr;</span>
+    </a>
+    <a class="way" href="#card-holder">
+      <span class="way-k">Safer</span>
+      <b>Keep your wallet cold</b>
+      <span class="way-t">Delegate a fresh hot wallet from your allowlisted wallet, then mint from the hot wallet.</span>
+      <span class="way-go">Delegate first &darr;</span>
+    </a>
+  </div>
+
+  <div class="opengate nopub" id="opengate">
+    <span class="og-k" id="og-k">Delegation opens</span>
+    <span class="og-when" id="og-when">Opens soon</span>
+    <span class="og-cd" id="og-cd" hidden></span>
+    <span class="og-note" id="og-note">You can read the flow below now. Connecting and delegating are locked until the window opens.</span>
+  </div>
+
+  <p class="steps-cap nopub">Keeping your wallet cold? The delegation route, step by step:</p>
+  <div class="steps nopub">
+    <div class="step">
+      <span class="n">01</span>
+      <h3>Check eligibility</h3>
+      <p>Connect your allowlisted wallet. We confirm it is on the mint allowlist and show any delegations it already has.</p>
+      <span class="who">You, wallet A</span>
+    </div>
+    <div class="step">
+      <span class="n">02</span>
+      <h3>Delegate a hot wallet</h3>
+      <p>Name a fresh wallet B and delegate it, scoped to the mint contract only. One signature, sent to the delegate.xyz registry, not to us.</p>
+      <span class="who">You, wallet A</span>
+    </div>
+    <div class="step">
+      <span class="n">03</span>
+      <h3>Mint as the delegate</h3>
+      <p>Connect wallet B. It mints your allocation. Passes land in B, and the count draws down A's cap.</p>
+      <span class="who">You, wallet B</span>
+    </div>
+  </div>
+
+  <section class="explain nopub">
+    <div class="explain-hd"><span class="k">Read first</span><h3>Connecting here does not sign you in, and delegating is not a token approval</h3></div>
+    <div class="explain-grid">
+      <div class="ex">
+        <span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Not a login</span>
+        <p>Connecting only shows QuoPull your <b>wallet address</b>. There is no account, no password, and no session. You can disconnect from the address button at the top, or in your wallet, whenever you want.</p>
+      </div>
+      <div class="ex">
+        <span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>No other site</span>
+        <p>Everything happens <b>on this page</b>. It never sends you to delegate.xyz and runs none of their code. It talks only to your wallet and to the chain.</p>
+      </div>
+      <div class="ex">
+        <span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Not a token approval</span>
+        <p>Yes, delegating is a transaction you approve in your wallet, so it can feel like a token approval. It is not one. It moves no funds, grants <b>no access</b> to your tokens or NFTs, and gives QuoPull <b>no custody</b> of anything. It writes one scoped permission to the neutral delegate.xyz registry (not to QuoPull): that wallet B may mint your allocation, on this contract only. You can revoke it anytime.</p>
+      </div>
+      <div class="ex">
+        <span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Already delegated everything to a wallet?</span>
+        <p>Then it can already mint for you, without signing anything here. delegate.xyz has a blanket "delegate all" option and the mint accepts it, so holders who already use one are not locked out. If you would rather it could not mint your allocation, <b>revoke it at delegate.xyz first</b>.</p>
+      </div>
+      <div class="ex">
+        <span class="t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Four passes is the jackpot line</span>
+        <p>The guaranteed allowlist allocation is <b>3 passes</b>. The weekly holder jackpot counts only wallets holding <b>4 or more</b>, so the guaranteed amount alone is one short of it. Top up in the Top-Up window or later. Free daily entries work from your first pass.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="mintclock" id="mintclock" hidden>
+    <div class="mc-phases">
+      <span class="mc-ph" id="mc-gtd">GTD &middot; cap <span id="mc-gtd-cap">&middot;</span></span>
+      <span class="mc-ph" id="mc-ov">Top-Up &middot; cap <span id="mc-ov-cap">&middot;</span></span>
+      <span class="mc-ph" id="mc-pub">Public &middot; cap <span id="mc-pub-cap">&middot;</span></span>
+    </div>
+    <div class="mc-count" id="mc-count">Mint has not opened yet</div>
+    <div class="mc-minted" id="mc-minted"><b>&middot;</b> minted</div>
+  </div>
+
+  <div class="pend" id="pend">
+    <b>Contracts are not live yet.</b> This page is wired and ready. Once the Art Pass is deployed, its address
+    gets set below and every action here goes live. Until then the flow is view only.
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="cols">
+
+    <!-- ============ DELEGATE SIDE (wallet B) ============ -->
+    <section class="panel" id="card-delegate">
+      <div class="panel-head"><span class="role">Mint</span><h2>Mint your passes</h2></div>
+      <div class="panel-body">
+        <p class="hint nopub">Connected with your allowlisted wallet? It shows below as This wallet. Delegated a hot wallet instead? Connect that one: we read delegate.xyz for the vaults that named it and cross check them against the allowlist. Passes land in the connected wallet.</p>
+
+        <div class="status wait" id="mint-status"><span class="pip"></span><span id="mint-text"><span class="nopub">Connect your allowlisted wallet, or a hot wallet it delegated.</span><span class="pub-only">Connect a wallet to mint. Any wallet can mint in the public window.</span></span></div>
+
+        <div class="field nopub">
+          <label>Wallets you can mint for</label>
+          <div class="vaults" id="vaults"><div class="vempty" id="vaults-empty">Nothing to mint for yet. Connect your allowlisted wallet, or a hot wallet it delegated.</div></div>
+        </div>
+
+        <div class="qtyrow">
+          <div class="qtybox">
+            <button id="q-dec" aria-label="Fewer">&minus;</button>
+            <span class="v" id="q-n">1</span>
+            <button id="q-inc" aria-label="More">+</button>
+          </div>
+          <span class="cap" id="q-cap"></span>
+        </div>
+
+        <p class="hint nopub">Passes land in <b>this</b> wallet, not the vault, so this is the wallet the weekly
+          holder jackpot looks at. That draw counts only wallets holding <b>4 or more</b> passes. A vault's
+          guaranteed allocation is 3, so minting just the guaranteed amount leaves this wallet one short of
+          the jackpot. Everything else, including the free daily raffle entries, works from the first pass.</p>
+
+        <div class="intent" id="mint-intent"></div>
+        <button class="btn block" id="mintBtn" disabled>Connect a wallet to mint</button>
+        <div class="toast local" id="dmint-toast" role="status" aria-live="polite"></div>
+        <div class="signnote"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span class="pub-only">Opens <b>one transaction to the Art Pass contract</b>. It pays the mint price and nothing else: no token approval, and no other assets leave your wallet.</span><span class="nopub">Opens <b>one transaction to the Art Pass contract</b>. A normal mint, sent from this delegated wallet.</span></div>
+      </div>
+    </section>
+
+    <!-- ============ AFTER THE REVEAL ============
+         Replaces the mint card the moment the beacon lands (_applyRevealed). Nothing here is mintable any more,
+         so the space carries what a pass holder needs next instead of a dead quantity stepper. -->
+    <section class="panel" id="card-next" hidden>
+      <div class="panel-head"><span class="role">Next</span><h2>What happens next</h2></div>
+      <div class="panel-body">
+        <div class="facts">
+          <div class="fact"><span class="k">$QPULL launch</span><span class="v" id="nf-launch">Tuesday 22 September, 9:00 AM Phoenix.</span></div>
+          <div class="fact"><span class="k">First hour</span><span class="v">Only a wallet holding an Art Pass can buy. Keep a pass in the wallet you will buy from: one held in a cold wallet, or in a vault you only delegated, does not count.</span></div>
+          <div class="fact"><span class="k">After that</span><span class="v">Anyone can buy, and passes keep working: packs to rip, the daily raffle, and the weekly holder draw.</span></div>
+          <div class="fact"><span class="k">Docs</span><span class="v"><a href="/docs.html">How QuoPull works</a>, drawn from the contracts.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ HOLDER SIDE (wallet A) ============ -->
+    <section class="panel nopub" id="card-holder">
+      <div class="panel-head"><span class="role">Holder</span><h2>Delegate a mint wallet</h2></div>
+      <div class="panel-body">
+        <p class="hint">Do this from your allowlisted wallet. You are granting a wallet you choose the right to mint your allocation. You are not moving any tokens, and the delegation is scoped so B can do nothing else on your behalf.</p>
+
+        <div class="status wait" id="al-status"><span class="pip"></span><span id="al-text">Connect your wallet to check eligibility. Connecting only reveals your address.</span></div>
+
+        <div class="field">
+          <label for="inp-b">Hot wallet to delegate (B)</label>
+          <input class="inp" id="inp-b" placeholder="0x… the wallet that will mint for you" autocomplete="off" spellcheck="false">
+          <div class="fielderr" id="b-err"></div>
+        </div>
+
+        <div class="scope" role="radiogroup" aria-label="Delegation scope">
+          <label class="opt rec">
+            <input type="radio" name="scope" value="contract" checked>
+            <span><span class="t">Scoped to the mint contract</span><span class="d">B can mint your Art Pass allocation and nothing else. If B is ever lost, this is all it could touch.</span></span>
+          </label>
+          <label class="opt risk" id="opt-all">
+            <input type="radio" name="scope" value="all">
+            <span><span class="t">Delegate everything</span><span class="d">B can act for A across every contract that reads delegate.xyz. Wider blast radius. Not recommended.</span></span>
+          </label>
+        </div>
+        <button class="showall" id="showall" type="button">Show the wider option</button>
+        <div class="allwarn" id="allwarn"><b>Heads up.</b> A blanket delegation lets B represent this wallet on any dapp, airdrop, or mint that reads delegate.xyz, not just QuoPull. If B is phished, that whole surface is exposed. We default to scoped for a reason.</div>
+
+        <div class="intent" id="del-intent"></div>
+        <button class="btn block" id="delBtn" disabled>Delegate B, scoped</button>
+        <div class="toast local" id="del-toast" role="status" aria-live="polite"></div>
+        <div class="signnote"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span>Opens <b>one transaction to the delegate.xyz registry</b> (0x…d493). Not a login. No token approval. No assets leave your wallet.</span></div>
+
+        <div class="deleg" id="del-list" hidden>
+          <div class="dh">This wallet's delegations for QuoPull</div>
+          <div id="del-rows"></div>
+          <div class="toast local" id="rv-toast" role="status" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PUBLIC: before you mint ============ -->
+    <section class="panel pub-only" id="card-check">
+      <div class="panel-head"><span class="role">Check</span><h2 id="check-h">Before you mint</h2></div>
+      <div class="panel-body">
+        <div class="facts">
+          <!-- MINT-TIME ROWS: hidden once the beacon lands, they describe a sale that is over (_applyRevealed) -->
+          <div class="fact" id="pf-row-price"><span class="k">Price</span><span class="v" id="pf-price">&middot;</span></div>
+          <div class="fact" id="pf-row-cap"><span class="k">Your cap</span><span class="v"><span id="pf-cap">&middot;</span> per wallet, including passes it minted in the allowlist windows</span></div>
+          <div class="fact"><span class="k" id="pf-close-k">Closes</span><span class="v" id="pf-close">&middot;</span></div>
+
+          <!-- AFTER THE REVEAL: what the pass is and what it does. Every figure matches the docs page. -->
+          <div class="fact" id="pf-row-supply" hidden><span class="k">Supply</span><span class="v">3,500, fixed. Every pass is minted and no more can ever be created.</span></div>
+          <div class="fact wide" id="pf-row-tiers" hidden>
+            <span class="k">Rarity tiers</span>
+            <span class="v">
+              <table class="spec">
+                <thead><tr><th>Tier</th><th class="num">Odds</th><th class="num">Entry weight</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="pill c">Common</span></td><td class="num">70%</td><td class="num">1&times;</td></tr>
+                  <tr><td><span class="pill u">Uncommon</span></td><td class="num">20%</td><td class="num">2&times;</td></tr>
+                  <tr><td><span class="pill r">Rare</span></td><td class="num">8%</td><td class="num">4&times;</td></tr>
+                  <tr><td><span class="pill s">Super rare</span></td><td class="num">2%</td><td class="num">8&times;</td></tr>
+                </tbody>
+              </table>
+            </span>
+          </div>
+          <div class="fact" id="pf-row-daily" hidden><span class="k">Daily raffle</span><span class="v">Every pass earns free entries every day. Rarity sets the entry weight above: how many draw seats a pass competes for, not a fixed share of any prize.</span></div>
+          <div class="fact" id="pf-row-holder" hidden><span class="k">Holder draw</span><span class="v">Weekly. Five passes are drawn at random from the whole range and each one pays an equal fifth of the pot in $QUOTRON. It picks passes, not wallets, so more eligible passes means proportionally more chances, and one wallet can win several of the five.</span></div>
+          <div class="fact" id="pf-row-hold4" hidden><span class="k">Hold 4</span><span class="v">The holder draw only counts wallets holding <b>4 or more</b> passes, held without a break from the week's freeze until the draw runs, about 4.5 to 7 days later. Dropping below 4 loses that week, and buying back does not restore it. The guaranteed allowlist allocation was 3, one short.</span></div>
+
+          <div class="fact"><span class="k">Contract</span><span class="v"><code id="pf-nft"></code></span></div>
+          <div class="fact"><span class="k">Collection</span><span class="v"><a href="https://opensea.io/collection/quopull" target="_blank" rel="noopener noreferrer">View the Art Passes on OpenSea</a></span></div>
+          <div class="fact" id="pf-row-site"><span class="k">Mint site</span><span class="v">quopull.fun, nowhere else</span></div>
+          <div class="fact" id="pf-row-phone"><span class="k">On a phone</span><span class="v">Open quopull.fun inside your wallet app's browser to connect.</span></div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <p class="revoke-note pub-only">Delegated a hot wallet earlier? You can still review or revoke it at <a href="/delegate">quopull.fun/delegate</a>.</p>
+
+  <div class="addr-verify nopub" id="verify"></div>
+
+  <footer class="wrap">
+    <span class="pub-only">QuoPull Art Pass mint. We never ask for a seed phrase, a private key, or a token approval. Check every address in your wallet prompt against the ones above before you sign.</span>
+    <span class="nopub">QuoPull delegated minting. Delegations are recorded on the delegate.xyz registry, an external contract, not on QuoPull.
+    We never ask for a seed phrase, a private key, or a blanket token approval. Verify every address in your wallet against the book above before you sign.</span>
+  </footer>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.4/dist/ethers.umd.min.js"
+  integrity="sha384-6Zl0Pc8zjSz8KvmNeXRvUQgY4ryFb+BwDvKCmLYcBME0joAaru491tQgi9B7zsMM"
+  crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+<!-- ethers is `defer`red so the page script below paints the gate and countdown without waiting for ~150 KB of
+     library. Deferred scripts finish before DOMContentLoaded, so that is where the load is checked, and where every
+     chain read starts (afterEthers). Checking at parse time would always see it missing. -->
+<script>document.addEventListener('DOMContentLoaded',function(){if(typeof ethers!=='undefined')return;var b=document.body;if(!b)return;var d=document.createElement('div');d.setAttribute('style','position:fixed;inset:0;z-index:999;display:grid;place-items:center;padding:24px;background:#E6E4DC;color:#14161A;font:14px/1.6 system-ui,sans-serif;text-align:center');d.innerHTML='<div><b>QuoPull could not start safely.</b><br>The signing library failed its integrity check, so no wallet action is available. Reload, and if this repeats do not connect a wallet on this page.</div>';b.appendChild(d)})</script>
+<script>
+(function(){
+  "use strict";
+  // MAINNET, verified live 2026-09-16: chain id 4663 from the RPC. The explorer is the FINAL host:
+  // explorer.mainnet.chain.robinhood.com answers 301 and redirects to blockscout, and every "verify before you
+  // sign" link is built from blockExplorerUrls, so it must not depend on a redirect.
+  var CHAIN={chainIdHex:"0x1237",chainId:4663,chainName:"Robinhood Chain",
+    rpcUrls:["https://rpc.mainnet.chain.robinhood.com"],
+    nativeCurrency:{name:"ETH",symbol:"ETH",decimals:18},
+    blockExplorerUrls:["https://robinhoodchain.blockscout.com"]};
+  // Page READS go to a dedicated read endpoint first when one is set, then fall back to the public node (see ro()).
+  // It is EMPTY in the repository, so reads use the public node directly. A deploy may inject a read endpoint here,
+  // but only one locked to the site's own domain, so any other origin gets a 403. It is never used for
+  // wallet_addEthereumChain, which keeps CHAIN.rpcUrls (the public node), so a key cannot end up in anyone's wallet.
+  // Never put an unlocked key here.
+  var READ_RPC = "";
+  // The allowlist file is CHAIN-SCOPED. A testnet run regenerates proofs for its own burner wallets, and
+  // when both chains shared one filename that regeneration OVERWROTE the mainnet allowlist in place,
+  // replacing the real holder proofs with testnet ones; a diff caught it before they were committed.
+  // Same filename for two chains is the bug; separate files make the collision impossible.
+  var ALLOWLIST_FILE = Number(CHAIN.chainId) === 46630 ? 'allowlist.testnet.json' : 'allowlist.json';
+
+  // ── addresses ──
+  // delegate.xyz v2 registry is LIVE on Robinhood Chain (same canonical address across chains).
+  var DELEGATE_REGISTRY="0x00000000000000447e69651d841bD8D104Bed493";
+  // Art Pass NFT on MAINNET. Deliberately ZERO until DeployNFT has run: never type an address here by hand.
+  // Fill it from the deploy's own log:
+  //     WEB_PATH=web/delegate.html node script/wire-web.mjs nft.log
+  // With NFT = ZERO and LOCKED = true the page only explains the flow and can send nothing.
+  var NFT="0xE423E4565EC9196f5B3e1319Aa7175a82A00D858"; // (wired from the Art Pass deploy on 2026-09-17)
+  var ZERO="0x0000000000000000000000000000000000000000";
+  var RIGHTS="0x0000000000000000000000000000000000000000000000000000000000000000"; // bytes32(0), matches the contract
+
+  var NFT_ABI=[
+    "function isRevealed() view returns (bool)",
+    "function revealRound() view returns (uint64)",
+    "function drand() view returns (address)",
+    "function mintPrice() view returns (uint256)",
+    "function phase() view returns (uint8)",
+    "function currentCap() view returns (uint256)",
+    "function mintStart() view returns (uint256)",
+    "function GTD_WINDOW() view returns (uint256)",
+    "function GTD_CAP() view returns (uint256)",
+    "function OVERFLOW_CAP() view returns (uint256)",
+    "function PUBLIC_CAP() view returns (uint256)",
+    "function publicOpensAt() view returns (uint256)",
+    "function publicMintClosesAt() view returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function MAX_SUPPLY() view returns (uint256)",
+    "function launched() view returns (bool)",
+    "function mintOpen() view returns (bool)",
+    "function mintedBy(address) view returns (uint256)",
+    "function allowlistRoot() view returns (bytes32)",
+    "function delegateRegistry() view returns (address)",
+    "function delegatedAllowlistMint(uint256,bytes32[],address) payable",
+    "function allowlistMint(uint256,bytes32[]) payable",
+    "function mintBatch(uint256) payable"
+  ];
+  // delegate.xyz v2 IDelegateRegistry (the calls this page uses)
+  var DELEG_TUPLE="tuple(uint8 type_, address to, address from, bytes32 rights, address contract_, uint256 tokenId, uint256 amount)";
+  var REG_ABI=[
+    "function delegateContract(address to, address contract_, bytes32 rights, bool enable) payable returns (bytes32)",
+    "function delegateAll(address to, bytes32 rights, bool enable) payable returns (bytes32)",
+    "function checkDelegateForContract(address to, address from, address contract_, bytes32 rights) view returns (bool)",
+    "function getIncomingDelegations(address to) view returns ("+DELEG_TUPLE+"[])",
+    "function getOutgoingDelegations(address from) view returns ("+DELEG_TUPLE+"[])"
+  ];
+  var DTYPE={ALL:1,CONTRACT:2};
+
+  var $=function(id){return document.getElementById(id)};
+  // ethers loads with `defer` (see the script tag above), so this script runs and paints before the library is there.
+  // Every path that touches ethers starts through afterEthers: the chain reads at init, the wallet and mint buttons,
+  // and the refresh timer. Deferred scripts run before DOMContentLoaded, so by then ethers is loaded or has failed
+  // (and the failure banner is up, so nothing chain-side starts).
+  var _ethersReady=new Promise(function(res){
+    if(typeof ethers!=='undefined' || document.readyState!=='loading') res();
+    else document.addEventListener('DOMContentLoaded', function(){ res(); });
+  });
+  function afterEthers(fn){ return function(){ var t=this, a=arguments;
+    return _ethersReady.then(function(){ if(typeof ethers!=='undefined') return fn.apply(t, a); }); }; }
+  var LIVE = NFT.toLowerCase()!==ZERO;
+  // Delegation-only launch. Before DeployNFT, NFT is the PRECOMPUTED CREATE address and has no
+  // code, so every NFT read throws (ethers BAD_DATA) and the page used to say "Could not read the mint status just now"
+  // forever, even though delegating works. An empty account is a FACT, not a failed read: the Art Pass is not deployed
+  // yet, and the mint has certainly not started ('pre'). null = not checked yet or the getCode read failed (the old
+  // "could not read" path still applies); false = no code at NFT; true = code seen (latched: code cannot go away).
+  var _nftCode=null, _nftCodeP=null;
+  function checkNftCode(p){
+    if(!LIVE || _nftCode===true) return Promise.resolve(_nftCode);
+    if(!_nftCodeP) _nftCodeP=_checkNftCode(p).finally(function(){ _nftCodeP=null; }); // one read at a time
+    return _nftCodeP;
+  }
+  async function _checkNftCode(p){
+    var before=_nftCode;
+    try{ var c=await withTimeout((p||ro()).getCode(NFT), 7000); _nftCode = (typeof c==='string' && c!=='0x' && c!=='') ? true : false; }
+    catch(e){ /* unknown: keep the last answer */ }
+    if(_nftCode!==before){
+      _syncNav(); if(typeof renderVerify==='function' && featureOpen()) renderVerify();
+      // deployed while the page was open: drop the "not deployed yet" counter text until the next totalMinted() read
+      if(_nftCode===true && before===false){ var _mm=$('mc-minted'); if(_mm) _mm.innerHTML='<b>&middot;</b> minted'; }
+    }
+    return _nftCode;
+  }
+  // Mint day (2026-09-18): the separate Mint item stays hidden; minting lives on this page, under "Delegate + Mint".
+  function _syncNav(){ var li=$('nav-app-li'); if(li) li.hidden = true; }
+  var provider,signer,account,connected=false;
+  // _mintOpen and _launchedNft start UNKNOWN (null), not at a guessed value. Optimistic defaults here
+  // enable a mint button on a state nobody confirmed: true means 'open', false means 'not launched'.
+  var price=null, cap=null, phase=null, mintStartTs=0, _mintOpen=null, _launchedNft=null;
+  var _clk={mintStart:0,gtdEnd:0,pubOpen:0,pubClose:0}, _clkOffset=0;
+  // SOLD OUT: totalMinted() has reached MAX_SUPPLY (read with the mint clock). Nothing is left to mint in any window,
+  // so the page stops inviting one: mintState() reads 'closed', and the copy says sold out instead of "live".
+  var _soldOut=false, _supplyN=0;
+  // REVEAL (2026-09-20). The collection reveals when the bound drand beacon lands on the oracle: no transaction to
+  // the NFT, so nothing here can be "switched on" by hand. The page reads isRevealed() and, once true, derives the
+  // tier split from the SAME beacon with NFTCollection.rarityOf's exact formula, so the numbers it prints are the
+  // chain's, computed from one read rather than 3,500.
+  var OPENSEA="https://opensea.io/collection/quopull";
+  var _revealed=false, _split=null, _splitBusy=false;
+  var _ORACLE_ABI=["function randomness(uint64) view returns (bytes32)"];
+  async function _loadSplit(p, nft){
+    if(_split || _splitBusy || !_supplyN) return;
+    _splitBusy=true;
+    try{
+      var r=await nft.revealRound(); if(!r) return;
+      var oracle=new ethers.Contract(await nft.drand(), _ORACLE_ABI, p);
+      var beacon=await oracle.randomness(r);
+      var c=[0,0,0,0];
+      for(var id=1; id<=_supplyN; id++){
+        var roll=BigInt(ethers.solidityPackedKeccak256(["bytes32","uint256","string"],[beacon,id,"nft"])) % 10000n;
+        c[roll<200n?3:roll<1000n?2:roll<3000n?1:0]++;
+      }
+      _split=c;
+    }catch(e){ /* a failed read just leaves the split out of the copy */ }
+    finally{ _splitBusy=false; }
+  }
+  function _soldLine(){ return 'Sold out. All '+(_supplyN||3500).toLocaleString('en-US')+' Art Passes are minted. Rarity reveals next.'; }
+  var mintQty=1, selVault=null, vaultData={}; // vaultData[addr]={proof, remaining, viaAll}
+  // A signature or a mined wait is in flight. The 30 s refresh used to run straight through one: it reset the
+  // vault selection, re-enabled the mint button while the mint was pending (a second click sends a second mint) and
+  // replaced the "Minting... tx" toast, link included, with "Refreshed.".
+  var _pend={mint:false, del:false, revoke:false};
+  function txBusy(){ return _pend.mint || _pend.del || _pend.revoke; }
+  // Feature gate: delegation is VISIBLE but LOCKED for now (no countdown yet).
+  // LOCKED is the "public site is up, but we are not live yet" switch -- it keeps the page purely
+  // informational (no chain reads, no addresses, no mint counter) while the URL is public pre-launch.
+  // IT IS NOT TIED TO THE MINT. Delegation writes to the delegate.xyz registry, which knows nothing about
+  // this collection, so a holder can delegate months early -- which is what the copy above the fold
+  // already promises ("a one time setup you do before the mint"). Leaving this true until mint-open makes
+  // that promise false and squeezes every delegation into the GTD window.
+  // MAINNET: once this file is wired to chain 4663, set LOCKED false when you want delegation open, days
+  // ahead of the mint, NOT at mint-open.
+  //
+  // This page is the PRODUCTION ROOT (vercel.json rewrites "/" to /delegate) and it was committed
+  // testnet-wired (chain 46630, a testnet NFT, allowlist.testnet.json) with LOCKED = false. LOCKED was the only
+  // interlock, so the next routine deploy would have told real allowlisted holders that delegation is open,
+  // switched their cold wallet to RH testnet, and recorded a delegation that does not exist on mainnet; on
+  // mint day the hot wallet has no delegation and the holder can miss the GTD window. Two interlocks now:
+  //   1. committed default is LOCKED = true;
+  //   2. a build wired to any chain other than MAINNET_CHAIN_ID never opens on a public host, whatever LOCKED
+  //      says. It opens only on a local preview host (python3 -m http.server on 127.0.0.1 / localhost, the
+  //      documented testnet workflow), so testnet rehearsals of the flow still work without editing this file.
+  var MAINNET_CHAIN_ID = 4663;
+  var LOCKED = false;
+
+  // Scheduled mint start. DISPLAY ONLY, and only while the contract still reports mintStart() == 0: the mint does
+  // not start by itself. The owner sends openAllowlistMint() at this time, and the moment that lands the clock and
+  // the gate switch to the ON-CHAIN mintStart and ignore this constant, so it can never contradict the contract.
+  // Friday 18 September 2026, 6:00 AM Phoenix time. Phoenix keeps MST (UTC-7) all year with no daylight saving,
+  // so this is 13:00 UTC: 6:00 AM Pacific, 9:00 AM Eastern, 2:00 PM London.
+  var MINT_SCHEDULED_AT = 1789736400;
+  var MINT_SCHEDULED_PHX = 'Friday 18 September, 6:00 AM Phoenix time';
+
+  // Delegation opens ON SCHEDULE, 24 hours before the mint: Thursday 17 September 2026, 6:00 AM Phoenix time
+  // (13:00 UTC). Publish the page with LOCKED = false any time before this and it opens itself at this instant,
+  // so nobody has to deploy the site at 6 AM. LOCKED = true still wins over the schedule and keeps it shut.
+  // This is a DISPLAY gate on the device clock, and that is deliberate and safe: delegating only writes a
+  // permission to the delegate.xyz registry, so someone who moves their clock can at worst delegate a few hours
+  // early, and the mint itself stays locked ON CHAIN until the owner opens it.
+  var DELEGATION_OPENS_AT = 1789650000;
+  var DELEGATION_OPENS_PHX = 'Thursday 17 September, 6:00 AM Phoenix time';
+  function _deviceNow(){ return Math.floor(Date.now()/1000); }
+  // Delegation opened 2026-09-17 6:00 AM Phoenix. This gate read the DEVICE clock, so a phone with a wrong date
+  // was locked out ("opens soon"), and one more than ~24.8 days behind overflowed the reload timer below
+  // (setTimeout past 2^31-1 ms fires at once) into an endless reload loop. The opening is past: retired.
+  function _delegationScheduled(){ return false; }
+  function _localTime(ts){
+    try{ return new Date(ts*1000).toLocaleString(undefined,
+           {weekday:'short', hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
+    catch(e){ return ''; }
+  }
+  function _scheduledLocal(){
+    try{ return new Date(MINT_SCHEDULED_AT*1000).toLocaleString(undefined,
+           {weekday:'short', hour:'numeric', minute:'2-digit', timeZoneName:'short'}); }
+    catch(e){ return ''; }
+  }
+  function _isLocalPreviewHost(){
+    try{ var h=String(location.hostname||'').toLowerCase();
+         return h==='localhost' || h==='127.0.0.1' || h==='[::1]' || h==='::1'; }catch(e){ return false; }
+  }
+  function featureOpen(){
+    if(CHAIN.chainId === MAINNET_CHAIN_ID) return !LOCKED && !_delegationScheduled();
+    return _isLocalPreviewHost(); // testnet-wired build: local rehearsal only, never a public host
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  // Explorer link for a tx hash; escaped so the sink does not depend on ethers' hash validation.
+  function txLink(hash, label){
+    var h=String(hash||''), ex=CHAIN.blockExplorerUrls[0];
+    return '<a href="'+esc(ex+'/tx/'+h)+'" target="_blank" rel="noopener">'+esc(label!=null ? label : (h.slice(0,10)+'…'))+'</a>';
+  }
+  function short(a){ return a? a.slice(0,6)+'…'+a.slice(-4) : ''; }
+  // A REAL wallet rejection, decided by code: EIP-1193 4001, or ethers v6's ACTION_REJECTED wrapper of it. The
+  // three catch blocks below used /reject|denied/i on the message, which printed "Rejected." for chain and RPC
+  // refusals ("Access denied", "permission denied"), telling the user they cancelled when they had not.
+  function isWalletReject(e){
+    try{
+      var seen=0;
+      for(var x=e; x && typeof x==='object' && seen<5; seen++){
+        if(x.code==='ACTION_REJECTED' || x.code===4001 || x.code==='4001') return true;
+        x = (x.info && x.info.error) || x.error || (x.data && x.data.originalError) || null;
+      }
+    }catch(_){}
+    return false;
+  }
+  // ethers internals that mean "the wallet answered with something unreadable". The raw text goes to the
+  // console for support; the user reads what it means for them.
+  function _isOpaqueWalletErr(e, m){
+    return (e && e.code==='UNKNOWN_ERROR') || /could not coalesce error/i.test(m||'');
+  }
+  // Plain-text error for a toast; the caller escapes it.
+  function errMsg(e, fallback){
+    // A declined or failed NETWORK SWITCH is not a declined transaction: say what to do instead.
+    if(e && e._switch) return 'Switch your wallet to '+CHAIN.chainName+' (chain '+CHAIN.chainId+') to continue. Nothing was sent.';
+    if(isWalletReject(e)) return 'Cancelled in your wallet. Nothing was sent.';
+    var m=''; try{ m=String((e && (e.shortMessage||e.reason||e.message)) || ''); }catch(_){ m=''; }
+    if(_isOpaqueWalletErr(e, m)){ console.warn('wallet error (shown to the user as a generic message):', e); return 'Your wallet returned an error. Nothing was sent.'; }
+    return m.slice(0,120) || fallback || 'Something went wrong. Try again.';
+  }
+  function isAddr(a){ try{ return ethers.isAddress(a); }catch(e){ return false; } }
+  function toast(html){ $('toast').innerHTML=html; }
+  // Write status next to the control that was clicked, and keep it in view.
+  function say(id, html){
+    var el=$(id); if(!el) { toast(html); return; }
+    el.innerHTML=html;
+    if(html){ try{ el.scrollIntoView({block:'nearest'}); }catch(_){} }
+  }
+  // One shared read-only provider. ro() used to build a new JsonRpcProvider on every call. Each new one sends an
+  // eth_chainId probe before its first read, and if the RPC cannot be reached it retries that probe every second for
+  // the life of the page, so a struggling RPC on mint day got more traffic, not less. staticNetwork skips the probe,
+  // and a single provider batches reads started together into one HTTP request.
+  // Failover: a batch that fails at the HTTP level on READ_RPC (a 403 on an origin Alchemy does not accept, a 429, a
+  // timeout, a network error) is sent again to the public node, and reads stay on the public node for a minute
+  // before READ_RPC is tried again. JSON-RPC errors inside a 200 (a revert) are answers, not failures, and never
+  // trigger it. The short timeout and single 429 retry keep a slow READ_RPC inside withTimeout's 7 seconds.
+  var _ro=null;
+  function ro(){
+    if(_ro) return _ro;
+    var net=Number(CHAIN.chainId), opts={ staticNetwork: true };
+    var backup=new ethers.JsonRpcProvider(CHAIN.rpcUrls[0], net, opts);
+    if(!READ_RPC){ _ro=backup; return _ro; }
+    var req=new ethers.FetchRequest(READ_RPC);
+    req.timeout=4000;
+    req.setThrottleParams({ maxAttempts: 2 });
+    var primary=new ethers.JsonRpcProvider(req, net, opts);
+    var primarySend=primary._send.bind(primary), primaryDownUntil=0;
+    primary._send=async function(payload){
+      if(Date.now()>=primaryDownUntil){
+        try{ return await primarySend(payload); }
+        catch(e){
+          primaryDownUntil=Date.now()+60000;
+          console.warn('read endpoint unavailable, using the public node for a minute:', e && (e.shortMessage||e.message||e));
+        }
+      }
+      return backup._send(payload);
+    };
+    _ro=primary;
+    return _ro;
+  }
+  // time-box a read so a flaky/hung RPC cannot leave the page spinning with no error
+  function withTimeout(p, ms){ return Promise.race([ p, new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('rpc-timeout')); }, ms||7000); }) ]); }
+
+  // ── theme (shares the key with index.html so it carries across pages) ──
+  var root=document.documentElement;
+  try{var st=localStorage.getItem('quopull-theme'); if(st) root.setAttribute('data-theme',st);}catch(e){}
+  $('theme').addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('quopull-theme',next);}catch(e){}
+  });
+
+  // ── mobile hamburger: toggle the nav + connect drawer ──
+  (function(){
+    var hb=$('hamburger'), tin=$('topbarIn'); if(!hb||!tin) return;
+    function setOpen(open){
+      tin.classList.toggle('menu-open',open);
+      hb.setAttribute('aria-expanded',open?'true':'false');
+    }
+    hb.addEventListener('click',function(){ setOpen(!tin.classList.contains('menu-open')); });
+    // close the drawer once a nav link is tapped
+    tin.querySelectorAll('.tnav a').forEach(function(a){ a.addEventListener('click',function(){ setOpen(false); }); });
+  })();
+
+  // ── verify-before-you-sign address book ──
+  function renderVerify(){
+    var ex=CHAIN.blockExplorerUrls[0];
+    // Before DeployNFT the Art Pass address holds no code yet; say so next to it, so a holder who opens the explorer
+    // link and finds an empty address is not alarmed (and knows the scoped delegation names that address on purpose).
+    var book=[{k:'delegate.xyz registry', a:DELEGATE_REGISTRY},{k:(_nftCode===false?'Art Pass NFT (not deployed yet)':'Art Pass NFT'), a:LIVE?NFT:''}];
+    var rows='';
+    book.forEach(function(e){ if(!e.a) return;
+      rows+='<span class="av-r"><span class="av-k">'+esc(e.k)+'</span>'+
+        '<a class="av-v" href="'+esc(ex+'/address/'+e.a)+'" target="_blank" rel="noopener noreferrer" title="'+esc(e.a)+'">'+esc(short(e.a))+'</a></span>';
+    });
+    $('verify').innerHTML='<span class="av-hd">Verify before you sign · '+esc(CHAIN.chainName)+' (chain '+CHAIN.chainId+')</span>'+rows+
+      '<span class="av-warn">Delegation goes to the delegate.xyz registry. Minting goes to the Art Pass NFT. Open a link and confirm it matches the address your wallet is calling. '+
+      (_nftCode===false ? 'The Art Pass contract is not deployed yet, so its explorer page shows no code: a scoped delegation names the address it will be deployed at. ' : '')+
+      'QuoPull will never ask for your seed phrase or a blanket token approval.</span>';
+  }
+
+  function intentHtml(action, amount, token, dest, extra){
+    var ex=CHAIN.blockExplorerUrls[0];
+    return '<b>'+esc(action)+'</b>'+
+      (amount?'<span class="i-amt">'+esc(amount)+' '+esc(token)+'</span>':'')+
+      (extra?'<span class="i-row">'+extra+'</span>':'')+
+      '<span class="i-row">To: '+esc(dest.k)+' '+(dest.a?'<a href="'+esc(ex+'/address/'+dest.a)+'" target="_blank" rel="noopener noreferrer" title="'+esc(dest.a)+'">'+esc(short(dest.a))+'</a>':'')+'</span>'+
+      '<span class="i-row">Network: '+esc(CHAIN.chainName)+' (chain '+CHAIN.chainId+')</span>'+
+      '<span class="i-chk">Confirm these match your wallet prompt</span>';
+  }
+
+  // ── allowlist proofs (public, same-origin). Leaf = keccak256(wallet); single-leaf tree = empty proof ──
+  // _alRootUnset: the contract's allowlistRoot() is still bytes32(0), i.e. DeployNFT has run but setAllowlistRoot
+  // has not. That is the normal launch order, not a stale file: delegation needs only the off-chain proof and the
+  // registry, so it stays open; only minting waits for the root.
+  var _al=null,_alTried=false,_alStale=false,_alRootUnset=false,_alPromise=null;
+  // One load at a time: a second caller used to get `_al` (still null) the moment `_alTried` was set, before the
+  // fetch had answered. With the silent reconnect running at page load next to init's own load, that printed
+  // "not on the mint allowlist" for an allowlisted wallet. Callers now await the same in-flight load.
+  function loadAllowlist(){ if(_alTried && _alPromise) return _alPromise; _alTried=true; _alPromise=_loadAllowlist(); return _alPromise; }
+  async function _loadAllowlist(){
+    // no-cache, not no-store: the browser still asks the server every time (never a stale list), but an unchanged file
+    // comes back as a tiny 304 instead of the whole allowlist again. refreshAll reloads it every 30 seconds.
+    try{ var r=await fetch(ALLOWLIST_FILE,{cache:'no-cache'}); if(r.ok) _al=await r.json(); }catch(e){}
+    // reconcile the shipped allowlist with the on-chain root: a mismatch means the published file is stale, so
+    // eligibility + mint would be wrong (and mints would revert NotAllowlisted). Latch _alStale to block signing.
+    // A root of bytes32(0) is "not set yet" (between DeployNFT and setAllowlistRoot), NOT a mismatch: it used to
+    // show "The published allowlist is out of date versus the contract. Do not sign" to every holder in that window
+    // and disable delegation, which does not depend on the root at all. No code at NFT: there is no root to read.
+    if(LIVE){
+      var _p=ro();
+      await checkNftCode(_p);
+      if(_nftCode===false){ _alStale=false; _alRootUnset=true; }
+      else if(_al && _al.root){ try{
+        var onchain=String(await withTimeout(new ethers.Contract(NFT,NFT_ABI,_p).allowlistRoot(), 7000)).toLowerCase();
+        _alRootUnset = /^0x0{64}$/.test(onchain);
+        _alStale = !_alRootUnset && onchain!==String(_al.root).toLowerCase();
+      }catch(e){} }
+    }
+    return _al;
+  }
+  function proofFor(addr){
+    if(!_al||!_al.proofs) return null;
+    var p=_al.proofs[addr.toLowerCase()];
+    return Array.isArray(p)? p : null;
+  }
+
+  // ── chain + connect ──
+  async function ensureChain(){
+    var cur=await window.ethereum.request({method:"eth_chainId"});
+    // MOBILE: MetaMask and Rabby in-app browsers answer eth_chainId with a NUMBER, not the hex
+    // string EIP-695 specifies, so cur.toLowerCase() threw here and nothing below ever ran.
+    // Compare numerically the way syncNetPill/assertChain already do, so both shapes work.
+    var curN=NaN; try{ curN=Number(BigInt(cur)); }catch(_){}
+    if(curN===CHAIN.chainId){ syncNetChip(cur); return; }
+    // Every failure from here on is a network-switch failure (tagged), not a declined transaction
+    try{
+      try{ await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CHAIN.chainIdHex}]}); }
+      catch(e){
+        if(e.code===4902||(e.data&&e.data.originalError&&e.data.originalError.code===4902)){
+          await window.ethereum.request({method:"wallet_addEthereumChain",params:[{chainId:CHAIN.chainIdHex,chainName:CHAIN.chainName,rpcUrls:CHAIN.rpcUrls,nativeCurrency:CHAIN.nativeCurrency,blockExplorerUrls:CHAIN.blockExplorerUrls}]});
+        } else throw e;
+      }
+      // Adding a chain does not guarantee the wallet switched to it. Re-read, and refuse to connect.
+      await assertChain();
+    }catch(e){ try{ e._switch=true; }catch(_){} syncNetChip(); throw e; }
+  }
+  // The header chip names the network the WALLET is on, and says so when it is the wrong one. Reads
+  // eth_chainId only (never prompts). `known` skips the read when the caller already has it.
+  async function syncNetChip(known){
+    var chip=$('chip'); if(!chip) return;
+    var box=chip.closest('.chip');
+    var id=known||null;
+    if(!id && window.ethereum){ try{ id=await window.ethereum.request({method:"eth_chainId"}); }catch(_){ id=null; } }
+    var n=NaN; try{ n=Number(BigInt(id)); }catch(_){}
+    var wrong = id!=null && n!==CHAIN.chainId;
+    chip.textContent = wrong ? 'Wrong network' : CHAIN.chainName;
+    if(box){ box.classList.toggle('wrongnet', wrong); box.title = wrong ? ('Your wallet is on chain '+(isFinite(n)?n:'?')+'. This page uses '+CHAIN.chainName+' (chain '+CHAIN.chainId+').') : ''; }
+  }
+  // The wallet's ACTIVE chain, read fresh, immediately before every signature. ethers v6's JsonRpcSigner
+  // does not send chainId with eth_sendTransaction, so nothing else stops a delegation or a mint landing on the
+  // wrong network.
+  async function assertChain(){
+    var id=null;
+    try{ id=await window.ethereum.request({method:"eth_chainId"}); }catch(e){ id=null; }
+    var n=NaN; try{ n=Number(BigInt(id)); }catch(e){}
+    if(n!==CHAIN.chainId){
+      throw new Error('Your wallet is not on '+CHAIN.chainName+' (chain '+CHAIN.chainId+'). Switch networks in your wallet, then try again.');
+    }
+  }
+  // The wallet reloads this page on chainChanged (including the switch connect() itself asks for) and on
+  // accountsChanged, which used to leave it disconnected and cost a second click. Remember, for this tab only, that
+  // the user connected; on load, reconnect WITHOUT a prompt when the wallet still exposes an account on the right
+  // chain. Cleared when the wallet reports no accounts.
+  // Phone browsers (Safari, Chrome) cannot see wallet apps: window.ethereum only exists inside a wallet's own
+  // in-app browser. "Install MetaMask" is the wrong advice for someone who already has it, so on a phone with no
+  // injected wallet, offer links that reopen this exact page inside the wallet instead. The Connect button lives
+  // in the menu drawer on a phone, so close the drawer and bring the message into view.
+  function _isPhone(){
+    try{
+      if(navigator.userAgentData && navigator.userAgentData.mobile) return true;
+      return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||'')
+        || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1); // iPadOS reports as a Mac
+    }catch(_){ return false; }
+  }
+  function _showOpenInWallet(){
+    var mm='https://metamask.app.link/dapp/'+location.host+location.pathname+location.search; // host/path, no scheme
+    var cb='https://go.cb-w.com/dapp?cb_url='+encodeURIComponent(location.href);
+    toast('<span class="bad">Open this page in your wallet app.</span> '
+      +'<span class="mut">Phone browsers cannot see wallet apps, so connect from your wallet’s own browser.</span><br>'
+      +'<a class="wopen" href="'+esc(mm)+'" rel="noopener">Open in MetaMask</a>'
+      +'<a class="wopen" href="'+esc(cb)+'" rel="noopener">Open in Coinbase Wallet</a><br>'
+      +'<span class="mut">Any other wallet: open its Browser tab and go to '+esc(location.host)+'.</span>');
+    try{ var t=$('topbarIn'), h=$('hamburger'); if(t) t.classList.remove('menu-open'); if(h) h.setAttribute('aria-expanded','false'); }catch(_){}
+    try{ $('toast').scrollIntoView({block:'center'}); }catch(_){}
+  }
+  var CONNECT_KEY='quopull-connected';
+  function _rememberConnect(on){ try{ if(on) sessionStorage.setItem(CONNECT_KEY,'1'); else sessionStorage.removeItem(CONNECT_KEY); }catch(_){} }
+  function _wantsReconnect(){ try{ return sessionStorage.getItem(CONNECT_KEY)==='1'; }catch(_){ return false; } }
+  var _connecting=false;
+  async function connect(opts){
+    var silent=!!(opts && opts.silent);
+    if(!silent) _connecting=true;
+    try{ return await _connect(opts, silent); } finally { _connecting=false; }
+  }
+  async function _connect(opts, silent){
+    var where = silent ? function(){} : function(h){ toast(h); }; // progress in place; only an error scrolls to itself
+    if(!featureOpen()){ where('<span class="bad">Delegation is not open yet.</span>'); return; }
+    if(!window.ethereum){
+      if(!silent && _isPhone()){ _showOpenInWallet(); return; }
+      where('<span class="bad">No wallet found.</span> <span class="mut">Install MetaMask, then reload.</span>'); return;
+    }
+    try{
+      where('<span class="mut">Connecting…</span>');
+      provider=new ethers.BrowserProvider(window.ethereum);
+      if(silent){
+        var accs=await window.ethereum.request({method:"eth_accounts"});
+        if(!accs || !accs.length){ _rememberConnect(false); return; }
+        var cid=await window.ethereum.request({method:"eth_chainId"});
+        syncNetChip(cid);
+        // same numeric compare: see the note in ensureChain above.
+        var cidN=NaN; try{ cidN=Number(BigInt(cid)); }catch(_){}
+        if(cidN!==CHAIN.chainId) return; // never switch networks without a click
+      } else {
+        await provider.send("eth_requestAccounts",[]);
+        _rememberConnect(true); // before the switch: the wallet may reload the page mid-connect
+        await ensureChain();
+      }
+      provider=new ethers.BrowserProvider(window.ethereum);
+      signer=await provider.getSigner();
+      account=await signer.getAddress();
+      connected=true;
+      _rememberConnect(true);
+      $('conn').textContent=short(account);
+      $('conn').classList.add('ghost');
+      $('conn').setAttribute('aria-haspopup','menu'); $('conn').setAttribute('aria-expanded','false'); $('conn').title='Wallet menu';
+      if(!silent) toast('');
+      syncNetChip();
+      await loadAllowlist();
+      await Promise.all([refreshHolder(), refreshDelegate()]);
+    }catch(e){
+      if(silent){ console.warn('silent reconnect failed:', e && (e.shortMessage||e.message||e)); return; }
+      if(!connected) _rememberConnect(false); // a connect the user declined is not a session to restore
+      say('toast', '<span class="bad">'+esc(errMsg(e,'Connection failed'))+'</span>');
+    }
+  }
+
+  // ── HOLDER side: eligibility + delegate ──
+  // This wallet's live QuoPull delegations, by delegate address (lowercase), so a second identical
+  // delegation is refused instead of offered. null = not read yet.
+  var _outDeleg=null;
+  async function refreshHolder(){
+    if(!connected) return;
+    var s=$('al-status'), t=$('al-text');
+    s.className='status wait'; t.textContent='Checking the allowlist…';
+    var proof=proofFor(account);
+    if(proof){ s.className='status good'; t.textContent='This wallet is on the mint allowlist.'; }
+    else { s.className='status bad'; t.textContent='This wallet is not on the mint allowlist. Delegation would not unlock a mint.'; }
+    validateDelegate();
+    // list this wallet's existing QuoPull delegations
+    if(LIVE){
+      try{
+        var reg=new ethers.Contract(DELEGATE_REGISTRY,REG_ABI,ro());
+        var out=await withTimeout(reg.getOutgoingDelegations(account));
+        var rows='', seenOut={scoped:{}, all:{}};
+        out.forEach(function(d){
+          var isC = Number(d.type_)===DTYPE.CONTRACT && d.contract_.toLowerCase()===NFT.toLowerCase();
+          var isA = Number(d.type_)===DTYPE.ALL;
+          if(!isC && !isA) return;
+          seenOut[isA?'all':'scoped'][String(d.to).toLowerCase()]=true;
+          rows+='<div class="drow"><span class="da">'+esc(short(d.to))+'</span>'+
+            '<span class="dt'+(isA?' all':'')+'">'+(isA?'All':'Scoped')+'</span>'+
+            '<button class="btn ghost sm rv" data-to="'+esc(d.to)+'" data-all="'+(isA?'1':'')+'">Revoke</button></div>';
+        });
+        _outDeleg=seenOut; validateDelegate();
+        if(rows){ $('del-rows').innerHTML=rows; $('del-list').hidden=false;
+          Array.prototype.forEach.call($('del-rows').querySelectorAll('.rv'),function(b){
+            b.addEventListener('click',function(){ revoke(b.getAttribute('data-to'), b.getAttribute('data-all')==='1'); });
+          });
+        } else { $('del-list').hidden=true; }
+      }catch(e){ $('del-list').hidden=true; _outDeleg=null; }
+    }
+  }
+
+  function scopeVal(){ var r=document.querySelector('input[name=scope]:checked'); return r?r.value:'contract'; }
+  // Where the mint is, from whatever has been read so far.
+  //   'pre'    not started (mintStart == 0)
+  //   'open'   an allowlist or public window is running (delegatedAllowlistMint can work)
+  //   'closed' launched, or started and the phase is CLOSED (time ran out)
+  //   null     nothing read yet
+  // currentCap() keeps returning PUBLIC_CAP after the close (NFTCollection natspec), so no "N left" is shown
+  // unless this says 'open'.
+  var _clkLaunched=null, _clkRead=false, _clkFailed=false; // _clkFailed: no mint-clock read has landed and the last one failed
+  function mintState(){
+    if(_nftCode===false) return 'pre'; // no contract at the Art Pass address yet, so the mint cannot have started
+    if(_launchedNft===true || _clkLaunched===true) return 'closed';
+    if(_soldOut) return 'closed'; // every pass is minted: nothing is left to mint, whatever the window
+    var ms = mintStartTs || _clk.mintStart || 0;
+    if(phase===null && !_clkRead) return null;
+    if(!ms) return 'pre';
+    if(phase===0) return 'closed';
+    if(phase===null && _clk.pubClose && _chainNow()>_clk.pubClose) return 'closed';
+    return 'open';
+  }
+  function validateDelegate(){
+    var b=$('inp-b').value.trim(), err=$('b-err'), inp=$('inp-b'), btn=$('delBtn');
+    var all=scopeVal()==='all';
+    // The label always names the scope doDelegate will send (delegateAll vs delegateContract). It used to be
+    // static markup, so "Delegate everything" was sent from a button reading "Delegate B, scoped".
+    btn.textContent = all ? 'Delegate B for everything' : 'Delegate B, scoped';
+    btn.classList.toggle('risk', all);
+    err.textContent=''; inp.classList.remove('bad');
+    if(!connected){ btn.disabled=true; $('del-intent').innerHTML=''; return; }
+    if(!LIVE){ btn.disabled=true; return; }
+    if(_alStale){ btn.disabled=true; err.textContent='The published allowlist is out of date versus the contract. Do not sign until it is fixed.'; $('del-intent').innerHTML=''; return; }
+    // A wallet with no allowlist proof has no allocation to delegate; the status line above says so
+    var noProof = !proofFor(account);
+    if(!b){ btn.disabled=true; $('del-intent').innerHTML=''; return; }
+    if(!isAddr(b)){ inp.classList.add('bad'); err.textContent='Not a valid address.'; btn.disabled=true; $('del-intent').innerHTML=''; return; }
+    if(b.toLowerCase()===account.toLowerCase()){ inp.classList.add('bad'); err.textContent='Delegate a different wallet than the one you are connected with.'; btn.disabled=true; $('del-intent').innerHTML=''; return; }
+    if(noProof){ btn.disabled=true; $('del-intent').innerHTML='';
+      err.textContent='This wallet is not on the mint allowlist, so a delegation from it would not unlock a mint (see the status above).'; return; }
+    // The same delegation already exists on the registry: nothing to send
+    if(_outDeleg && _outDeleg[all?'all':'scoped'][b.toLowerCase()]){
+      btn.disabled=true; btn.classList.remove('risk'); btn.textContent = all ? 'Already delegated (all)' : 'Already delegated (scoped)';
+      $('del-intent').innerHTML=''; return; }
+    btn.disabled=_pend.del; // a refresh while the delegation is pending must not re-enable the button
+    $('del-intent').innerHTML=intentHtml(
+      (all?'Delegate '+short(b)+' for everything':'Delegate '+short(b)+', scoped to the mint contract'),
+      '', '',
+      {k:'delegate.xyz registry', a:DELEGATE_REGISTRY},
+      (all?'Scope: ALL contracts (wide)':'Scope: Art Pass NFT only')+' · This wallet stays the owner of its assets');
+  }
+
+  // After a delegation lands, offer a ready-made post on X. It never carries a wallet address or a tx link: tying a
+  // cold wallet to a public profile makes that holder a target, and keeping that wallet quiet is the point of
+  // delegating. The mint time is only named while the mint has not started, so the text is never stale.
+  function shareDelegationOnX(st){
+    var text='I delegated my QuoPull Art Pass mint.\n\nMy allowlisted wallet stays cold, and a fresh hot wallet mints for me'
+      +(st==='pre' ? ' when the mint opens '+MINT_SCHEDULED_PHX+'.' : '.')
+      +'\n\nquopull.fun';
+    return '<a class="share-x" href="'+esc('https://x.com/intent/tweet?text='+encodeURIComponent(text))+'" target="_blank" rel="noopener noreferrer">Post it on X</a>';
+  }
+  async function doDelegate(){
+    if(!featureOpen()){ toast('<span class="bad">Delegation is not open yet.</span>'); return; }
+    var b=$('inp-b').value.trim(); if(!isAddr(b)) return;
+    var all=scopeVal()==='all';
+    if(_pend.del) return;
+    _pend.del=true; $('delBtn').disabled=true;
+    try{
+      await assertChain();
+      var reg=new ethers.Contract(DELEGATE_REGISTRY,REG_ABI,signer);
+      say('del-toast', '<span class="mut">Confirm the delegation in your wallet…</span>');
+      var tx = all ? await reg.delegateAll(b, RIGHTS, true)
+                   : await reg.delegateContract(b, NFT, RIGHTS, true);
+      say('del-toast', '<span class="mut">Delegating… '+txLink(tx.hash)+'</span>');
+      await tx.wait();
+      // Say what the delegation unlocks NOW, from the mint's phase
+      var st=mintState(), who=esc(short(b));
+      var msg = st==='pre' ? '<span class="ok">✓ '+who+' can mint for this wallet once the mint opens.</span> Switch to that wallet then.'
+              : st==='closed' ? '<span class="ok">✓ Delegated '+who+'.</span> The mint has closed, so this does not unlock a mint.'
+              : st==='open' ? '<span class="ok">✓ '+who+' can now mint for this wallet.</span> Switch to that wallet to mint.'
+              : '<span class="ok">✓ Delegated '+who+(all?' for everything':', scoped to the mint contract')+'.</span>';
+      say('del-toast', msg+' '+txLink(tx.hash,'view tx')+(st==='closed' ? '' : ' '+shareDelegationOnX(st)));
+      $('del-intent').innerHTML='';
+      $('inp-b').value=''; // an identical second delegation is not offered again
+      await refreshHolder();
+    }catch(e){
+      say('del-toast', '<span class="bad">'+esc(errMsg(e))+'</span>'); // escaped
+    }finally{ _pend.del=false; validateDelegate(); } // re-validate rather than blindly re-enable
+  }
+
+  async function revoke(to, isAll){
+    if(!connected||!isAddr(to)||_pend.revoke) return;
+    _pend.revoke=true;
+    try{
+      await assertChain();
+      var reg=new ethers.Contract(DELEGATE_REGISTRY,REG_ABI,signer);
+      say('rv-toast', '<span class="mut">Confirm the revocation in your wallet…</span>');
+      // an ALL delegation must be revoked via delegateAll — calling delegateContract(false) on it is a silent
+      // no-op that would report success while leaving the wide grant fully active.
+      var tx = isAll ? await reg.delegateAll(to, RIGHTS, false)
+                     : await reg.delegateContract(to, NFT, RIGHTS, false);
+      say('rv-toast', '<span class="mut">Revoking… '+txLink(tx.hash)+'</span>');
+      await tx.wait();
+      var _rvMsg='<span class="ok">✓ Revoked '+esc(short(to))+(isAll?' (all)':'')+'.</span> '+txLink(tx.hash,'view tx');
+      _pend.revoke=false;
+      await refreshHolder();
+      // the row list may now be hidden (no delegations left): keep the result visible next to the delegate button
+      if($('del-list').hidden){ $('rv-toast').innerHTML=''; say('del-toast', _rvMsg); } else say('rv-toast', _rvMsg);
+    }catch(e){ if($('del-list').hidden) say('del-toast', '<span class="bad">'+esc(errMsg(e))+'</span>'); else say('rv-toast', '<span class="bad">'+esc(errMsg(e))+'</span>'); } // escaped
+    finally{ _pend.revoke=false; }
+  }
+
+  // ── DELEGATE side: discover vaults + mint ──
+  var _selfNoticeShown=false, _delegateReadOnce=false;
+  async function refreshDelegate(){
+    if(!connected) return;
+    var s=$('mint-status'), t=$('mint-text');
+    if(!LIVE){ s.className='status wait'; t.textContent='Live once the Art Pass address is set.'; return; }
+    if(_alStale && !_publicMode){ s.className='status bad'; t.textContent='The published allowlist is out of date versus the contract. Minting is disabled until it is fixed.'; vaultData={}; renderVaults(); return; }
+    // Mint day: this line flipped to "Reading…" on EVERY 30 s background refresh, and sat there on a slow RPC,
+    // which read as the page constantly reloading. Only the first read of a connection says it.
+    if(!_delegateReadOnce){ s.className='status wait'; t.textContent=_publicMode ? 'Reading what this wallet has minted…' : 'Reading delegate.xyz for vaults that named this wallet…'; }
+    // Build the new list aside and swap it in at the end, keeping the vault the user picked if it is still
+    // eligible. This used to clear the selection first, so every 30 s refresh jumped back to the first vault.
+    var keepSel=selVault, next={};
+    try{
+      var p=ro();
+      var reg=new ethers.Contract(DELEGATE_REGISTRY,REG_ABI,p);
+      var nft=new ethers.Contract(NFT,NFT_ABI,p);
+      await checkNftCode(p);
+      if(_nftCode===false){
+        // Nothing to read at the Art Pass address yet (every read would throw and log a warning). The mint is
+        // 'pre' by construction; updateMintBtn says the contract is not deployed yet instead of "could not read".
+        price=null; cap=null; phase=null; mintStartTs=0; _mintOpen=null; _launchedNft=null;
+      } else {
+      try{ price=await withTimeout(nft.mintPrice()); }catch(e){}
+      try{ cap=Number(await nft.currentCap()); }catch(e){}
+      try{ phase=Number(await nft.phase()); }catch(e){}
+      try{ mintStartTs=Number(await nft.mintStart()); }catch(e){}
+      // `catch(e){ _mintOpen=true }` declared the mint OPEN whenever the read failed -- the destructive
+      // direction, since it enables the button and invites a transaction that reverts. A failed launched()
+      // likewise left the page believing the mint had not closed. index.html had this exact bug in its
+      // launch gate; this is the delegate page's copy. Unknown stays null and the button refuses to enable.
+      try{ _mintOpen=await withTimeout(nft.mintOpen()); }
+      catch(e){ _mintOpen=null; console.warn('mintOpen() unreadable -- mint stays disabled rather than assuming open'); }
+      try{ _launchedNft=await withTimeout(nft.launched()); }
+      catch(e){ _launchedNft=null; console.warn('launched() unreadable -- not assuming the mint is still open'); }
+      }
+      // PUBLIC MINT. Once the public window is open (and this is not the /delegate page), every connected wallet
+      // mints for itself on the open path, mintBatch(qty), capped by currentCap() (PUBLIC_CAP) minus mintedBy: one
+      // counter per wallet, so passes it minted in the allowlist windows count against the same 20.
+      if(_publicMode){
+        var pubMinted=0; if(_nftCode!==false){ try{ pubMinted=Number(await nft.mintedBy(account)); }catch(e){} }
+        var pk=account.toLowerCase(); next={};
+        next[pk]={addr:account, proof:null, minted:pubMinted, remaining:(mintState()==='open') ? Math.max(0,(cap||0)-pubMinted) : 0, viaAll:false, self:true, pub:true};
+        vaultData=next; selVault=pk; renderVaults(); _delegateReadOnce=true;
+        return;
+      }
+      // DIRECT MINT. The registry does not count a wallet as delegated to itself (checkDelegateForContract(a, a, ...)
+      // is false), so an allowlisted wallet connected here could not use delegatedAllowlistMint and had no way to mint
+      // on this page. It mints with allowlistMint(qty, proof) instead: listed first as "This wallet", sharing the
+      // qty/cap/price machinery below. mintedBy is one counter per wallet, so direct and delegated mints of the same
+      // wallet draw down the same cap, exactly as the contract counts them.
+      var seen={}, selfKey=account.toLowerCase(), selfProof=proofFor(account);
+      if(selfProof){
+        var selfMinted=0; if(_nftCode!==false){ try{ selfMinted=Number(await nft.mintedBy(account)); }catch(e){} }
+        next[selfKey]={addr:account, proof:selfProof, remaining:(mintState()==='open') ? Math.max(0,(cap||0)-selfMinted) : 0, viaAll:false, self:true};
+        seen[selfKey]=true;
+      }
+      var incoming=[];
+      try{ incoming=await withTimeout(reg.getIncomingDelegations(account)); }
+      catch(e){ if(!selfProof) throw e; } // a wallet that can mint for itself keeps its row even if delegate.xyz cannot be read
+      for(var i=0;i<incoming.length;i++){
+        var d=incoming[i];
+        var isC = Number(d.type_)===DTYPE.CONTRACT && d.contract_.toLowerCase()===NFT.toLowerCase();
+        var isA = Number(d.type_)===DTYPE.ALL;
+        if(!isC && !isA) continue;
+        var vault=d.from; var key=vault.toLowerCase();
+        if(seen[key]) continue; seen[key]=true;
+        var proof=proofFor(vault);
+        if(!proof) continue; // vault not on the allowlist -> cannot mint
+        // confirm the registry honours it for our contract (covers ALL and CONTRACT both)
+        var ok=false; try{ ok=await reg.checkDelegateForContract(account, vault, NFT, RIGHTS); }catch(e){}
+        if(!ok) continue;
+        var minted=0; if(_nftCode!==false){ try{ minted=Number(await nft.mintedBy(vault)); }catch(e){} }
+        // currentCap() still reads PUBLIC_CAP after the close, so an allocation exists only while a window runs
+        var remaining = (mintState()==='open') ? Math.max(0, (cap||0)-minted) : 0;
+        next[key]={addr:vault, proof:proof, remaining:remaining, viaAll:(isA && !isC)};
+      }
+      vaultData=next; selVault=(keepSel && next[keepSel]) ? keepSel : null;
+      renderVaults(); _delegateReadOnce=true;
+      var me=next[selfKey];
+      if(me && me.remaining>0 && mintState()==='open' && !_selfNoticeShown){
+        _selfNoticeShown=true;
+        toast('<span class="ok">✓ This wallet is on the allowlist and can mint up to '+me.remaining+' now.</span> <a href="#card-delegate">Mint now &darr;</a>');
+      }
+    }catch(e){
+      // a failed BACKGROUND read keeps the last good list: wiping it disabled the mint button for 30 s on one blip
+      if(_delegateReadOnce){ console.warn('delegation refresh failed, keeping the last list:', e && (e.shortMessage||e.message||e)); return; }
+      vaultData={}; selVault=null; updateMintBtn(); // unknown list: nothing to mint for until a read lands
+      s.className='status bad'; t.textContent='Could not read delegations. Check the network and retry.';
+    }
+  }
+
+  function renderVaults(){
+    var keys=Object.keys(vaultData), box=$('vaults'), s=$('mint-status'), t=$('mint-text');
+    if(_publicMode){
+      var pv=keys.length ? vaultData[keys[0]] : null;
+      if(!pv || !pv.pub){ s.className='status wait'; t.textContent=_soldOut ? _soldLine() : 'Connect a wallet to mint.'; selVault=null; updateMintBtn(); return; }
+      selVault=keys[0];
+      if(mintState()==='closed'){ s.className='status wait'; t.textContent=_soldOut ? _soldLine() : 'The mint is over.'; }
+      else { s.className='status good'; t.textContent = pv.remaining>0
+        ? 'This wallet has minted '+pv.minted+' of '+(cap||'·')+'. It can mint '+pv.remaining+' more.'
+        : 'This wallet has minted its full '+(cap||'')+'.'; }
+      clampQty(); updateMintBtn(); return;
+    }
+    if(!keys.length){
+      box.innerHTML='<div class="vempty">This wallet is not on the allowlist, and no allowlisted wallet has delegated it.</div>';
+      s.className='status wait'; t.textContent=_soldOut ? _soldLine() : 'Connect your allowlisted wallet, or a hot wallet it delegated.';
+      selVault=null; updateMintBtn(); return;
+    }
+    // The row and the status follow the mint's phase, not currentCap() alone
+    var ms=mintState(), nv=keys.length+' wallet'+(keys.length>1?'s':''), onlySelf=(keys.length===1 && vaultData[keys[0]].self);
+    if(ms==='closed'){ s.className='status wait'; t.textContent=_soldOut ? _soldLine() : 'The mint is over.'; }
+    else if(ms==='pre'){ s.className='status good'; t.textContent=onlySelf ? 'This wallet is on the allowlist. It can mint once the mint opens.' : nv+' you can mint for once the mint opens.'; }
+    else { s.className='status good';
+      var sv=vaultData[keys[0]];
+      t.textContent = !onlySelf ? nv+' you can mint for.'
+        : (sv.remaining>0 ? 'This wallet is on the allowlist and can mint up to '+sv.remaining+' now.' : 'This wallet has minted its full allowance for this window.'); }
+    if(!selVault) selVault=keys[0];
+    var html='';
+    keys.forEach(function(k){
+      var v=vaultData[k], on=(k===selVault);
+      var rem = ms==='pre' ? 'allocation opens with the mint'
+              : ms==='closed' ? 'mint closed'
+              : ms==='open' ? (v.remaining+' left of cap') : '&middot;';
+      html+='<label class="vault"><input type="radio" name="vault" value="'+esc(v.addr)+'"'+(on?' checked':'')+'>'+
+        '<span class="va">'+(v.self?'This wallet &middot; ':'')+esc(short(v.addr))+'</span>'+
+        '<span class="meta"><span class="tag'+(v.viaAll?' all':'')+'">'+(v.self?'Direct':(v.viaAll?'Via all':'Scoped'))+'</span>'+
+        '<span class="rem">'+rem+'</span></span></label>';
+    });
+    box.innerHTML=html;
+    Array.prototype.forEach.call(box.querySelectorAll('input[name=vault]'),function(r){
+      r.addEventListener('change',function(){ selVault=r.value.toLowerCase(); clampQty(); updateMintBtn(); });
+    });
+    clampQty(); updateMintBtn();
+  }
+
+  function selData(){ return selVault? vaultData[selVault] : null; }
+  function maxQty(){ var v=selData(); return v? Math.max(1, v.remaining) : 1; }
+  function clampQty(){ var m=maxQty(); if(mintQty>m) mintQty=m; if(mintQty<1) mintQty=1; $('q-n').textContent=mintQty;
+    var v=selData(); $('q-cap').textContent = v? ('max '+v.remaining+' for '+(v.self ? 'this wallet' : short(v.addr))) : ''; }
+
+  var MINT_BTN_IDLE='Mint';
+  function updateMintBtn(){
+    var btn=$('mintBtn'), v=selData();
+    if(_pend.mint){ btn.disabled=true; return; } // never re-enabled by a refresh while a mint is in flight
+    // Every disabled state resets the label, so a "Mint 3 for ... 0.0225 ETH" from an earlier state never
+    // sits on a button that cannot send it.
+    var off=function(){ btn.disabled=true; btn.textContent=_soldOut ? 'Sold out' : (connected ? MINT_BTN_IDLE : 'Connect a wallet to mint'); $('mint-intent').innerHTML=''; };
+    if(_alStale && !(v && v.pub)){ off(); $('q-cap').textContent='The published allowlist is out of date versus the contract. Do not sign.'; return; }
+    // An empty Art Pass address is a known state, not a failed read (see _nftCode)
+    if(_nftCode===false){ off(); $('q-cap').textContent='The Art Pass contract is not deployed yet. Minting opens after it is deployed and the mint starts.'; return; }
+    // closed first: after the close that is the fact, even when a status read failed on the way (it used to say
+    // "could not read the mint status" on a mint that had simply ended)
+    if(_launchedNft || mintState()==='closed'){ off(); $('q-cap').textContent=_soldOut ? 'Every Art Pass is minted.' : 'The mint has closed.'; return; }
+    if(_launchedNft===null || _mintOpen===null){
+      // Neither open nor closed: we could not read it. Refuse rather than offer a mint on an unknown state.
+      off();
+      $('q-cap').textContent='Could not read the mint status just now. Refresh before minting.'; return; }
+    // allowlistRoot() is still unset (DeployNFT ran, setAllowlistRoot has not): a delegated mint would revert
+    if(_alRootUnset && !(v && v.pub)){ off(); $('q-cap').textContent='The allowlist is not set on the Art Pass contract yet. Minting opens after it is.'; return; }
+    // Before the mint has started (mintStart == 0) mintOpen() is simply not switched on yet; "paused" misread that
+    if(!_mintOpen){ off(); $('q-cap').textContent = mintState()==='pre' ? 'The mint has not opened yet. Come back once it starts.' : 'Minting is paused right now.'; return; }
+    if(!connected||!LIVE||!v||v.remaining<=0||price==null){
+      off();
+      if(v&&v.remaining<=0){
+        // remaining==0 while the mint is closed means the window is not open, not that the vault is used up
+        if(mintStartTs===0) $('q-cap').textContent='The mint has not opened yet. Come back once it starts.';
+        else if(phase===0) $('q-cap').textContent='The mint window has closed.';
+        else $('q-cap').textContent='This vault has no allocation left.';
+      }
+      return;
+    }
+    btn.disabled=false;
+    var cost=price*BigInt(mintQty);
+    btn.textContent='Mint '+mintQty+(v.self?'':' for '+short(v.addr))+' · '+(+ethers.formatEther(cost)).toFixed(4)+' ETH';
+    $('mint-intent').innerHTML=intentHtml(
+      'Mint '+mintQty+' Art Pass'+(mintQty>1?'es':'')+(v.self?' for this wallet':' for vault '+short(v.addr)),
+      (+ethers.formatEther(cost)).toFixed(4), 'ETH',
+      {k:'Art Pass NFT', a:NFT},
+      v.self ? 'Passes go to this wallet ('+short(account)+') · allocation counts against this wallet'
+             : 'Passes go to this wallet ('+short(account)+') · allocation counts against '+short(v.addr));
+  }
+
+  async function doMint(){
+    if(!featureOpen()){ toast('<span class="bad">Delegation is not open yet.</span>'); return; }
+    var v=selData(); if(!v || _pend.mint) return;
+    var n=Math.max(1,Math.min(mintQty,maxQty()));
+    _pend.mint=true; $('mintBtn').disabled=true;
+    try{
+      await assertChain(); // value-bearing
+      // and the Art Pass must have code on the wallet's chain; a failed read does not block, an empty account does
+      var _code=null; try{ _code=await new ethers.BrowserProvider(window.ethereum).getCode(NFT); }catch(_e){ _code=null; }
+      if(_code==='0x') throw new Error('No Art Pass contract at '+short(NFT)+' on this network. Nothing was sent.');
+      var nft=new ethers.Contract(NFT,NFT_ABI,signer);
+      var cost=price*BigInt(n);
+      say('dmint-toast', '<span class="mut">Confirm the mint in your wallet…</span>');
+      var tx = v.pub ? await nft.mintBatch(n, {value:cost})
+             : v.self ? await nft.allowlistMint(n, v.proof, {value:cost})
+                      : await nft.delegatedAllowlistMint(n, v.proof, v.addr, {value:cost});
+      say('dmint-toast', '<span class="mut">Minting '+n+' pass'+(n>1?'es':'')+'… '+txLink(tx.hash)+'</span>');
+      await tx.wait();
+      say('dmint-toast', '<span class="ok">✓ Minted '+n+' pass'+(n>1?'es':'')+(v.self?'':' for '+esc(short(v.addr)))+'.</span> '+txLink(tx.hash,'view tx'));
+      $('mint-intent').innerHTML='';
+      _pend.mint=false;
+      await refreshDelegate();
+    }catch(e){
+      say('dmint-toast', '<span class="bad">'+esc(errMsg(e))+'</span>'); // escaped
+    }finally{ _pend.mint=false; updateMintBtn(); }
+  }
+
+  // ── wiring ──
+  // WALLET MENU. Once connected, the address button opened nothing (a click re-ran connect). It now opens
+  // Copy address / View on explorer / Disconnect. Disconnect forgets the session so a reload does not reconnect
+  // silently, and asks wallets that support EIP-2255 wallet_revokePermissions (MetaMask) to drop this site's
+  // access; other wallets keep the permission until the user removes it there, and the page stops using it.
+  function closeWalletMenu(){ var m=$('wmenu'); if(m) m.remove(); var b=$('conn'); if(b) b.setAttribute('aria-expanded','false');
+    document.removeEventListener('click',_wmOutside,true); document.removeEventListener('keydown',_wmKey,true); window.removeEventListener('resize',closeWalletMenu); }
+  function _wmOutside(e){ var m=$('wmenu'); if(m && !m.contains(e.target) && e.target!==$('conn')) closeWalletMenu(); }
+  function _wmKey(e){ if(e.key==='Escape') closeWalletMenu(); }
+  function toggleWalletMenu(){
+    if($('wmenu')){ closeWalletMenu(); return; }
+    var btn=$('conn'), r=btn.getBoundingClientRect(), m=document.createElement('div');
+    m.id='wmenu'; m.className='wmenu'; m.setAttribute('role','menu');
+    m.innerHTML='<div class="wm-addr">'+esc(account)+'</div>'
+      +'<button type="button" role="menuitem" id="wm-copy">Copy address</button>'
+      +'<a role="menuitem" href="'+esc(CHAIN.blockExplorerUrls[0]+'/address/'+account)+'" target="_blank" rel="noopener noreferrer">View on explorer</a>'
+      +'<button type="button" role="menuitem" id="wm-disc" class="wm-danger">Disconnect</button>';
+    m.style.top=Math.round(r.bottom+8)+'px';
+    m.style.right=Math.max(8, Math.round(document.documentElement.clientWidth-r.right))+'px';
+    document.body.appendChild(m); btn.setAttribute('aria-expanded','true');
+    $('wm-copy').addEventListener('click', async function(){
+      // wallet in-app browsers often lack navigator.clipboard, so fall back to the classic selection copy
+      var el=this, ok=false;
+      try{ await navigator.clipboard.writeText(account); ok=true; }catch(_){}
+      if(!ok){ try{ var ta=document.createElement('textarea'); ta.value=account; ta.setAttribute('readonly','');
+        ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); ok=document.execCommand('copy'); ta.remove(); }catch(_){} }
+      el.textContent = ok ? 'Copied' : 'Copy failed';
+      setTimeout(closeWalletMenu, 900);
+    });
+    $('wm-disc').addEventListener('click', disconnectWallet);
+    setTimeout(function(){ document.addEventListener('click',_wmOutside,true); document.addEventListener('keydown',_wmKey,true); window.addEventListener('resize',closeWalletMenu); }, 0);
+  }
+  async function disconnectWallet(){
+    closeWalletMenu();
+    _rememberConnect(false);
+    try{ if(window.ethereum && window.ethereum.request) await window.ethereum.request({method:'wallet_revokePermissions', params:[{eth_accounts:{}}]}); }catch(_){}
+    location.reload();
+  }
+  $('conn').addEventListener('click', function(e){ if(connected){ e.preventDefault(); toggleWalletMenu(); return; } afterEthers(connect)(); });
+  $('inp-b').addEventListener('input',afterEthers(validateDelegate));
+  Array.prototype.forEach.call(document.querySelectorAll('input[name=scope]'),function(r){
+    r.addEventListener('change',function(){
+      var all=scopeVal()==='all';
+      $('allwarn').classList.toggle('on',all);
+      afterEthers(validateDelegate)();
+    });
+  });
+  $('showall').addEventListener('click',function(){
+    $('opt-all').classList.add('shown'); this.style.display='none';
+  });
+  $('delBtn').addEventListener('click',afterEthers(doDelegate));
+  $('q-dec').addEventListener('click',function(){ if(mintQty>1){mintQty--; clampQty(); afterEthers(updateMintBtn)();} });
+  $('q-inc').addEventListener('click',function(){ if(mintQty<maxQty()){mintQty++; clampQty(); afterEthers(updateMintBtn)();} });
+  $('mintBtn').addEventListener('click',afterEthers(doMint));
+  if(window.ethereum){
+    // A reload keeps the connection (see _wantsReconnect); a wallet that disconnected the site ends it.
+    // Mint day: reload only on a REAL change. Several wallets (MetaMask mobile on regaining focus, some in-app
+    // browsers) re-send accountsChanged / chainChanged with the same values, and an unconditional reload on each
+    // read to minters as "the site keeps refreshing". accountsChanged during connect() is ignored too: MetaMask
+    // fires it when it first grants access, which reloaded the page mid-connect and made people connect twice.
+    // Mint day, second pass (Chrome reports of rapid refreshing after the first fix):
+    //  - a desktop extension can announce its chain while it starts up, BEFORE the eth_chainId read below answers;
+    //    with no baseline yet that counted as a change and reloaded, and the next load did the same: a loop. The
+    //    first announcement is now only the baseline.
+    //  - before a wallet is connected nothing on screen depends on its chain, so a change just updates the chip.
+    //  - several extensions at once can announce DIFFERENT chains back and forth, which no dedupe survives, so an
+    //    automatic reload is also rate limited: never twice within 15 s, whatever the wallet does. A suppressed one
+    //    says what to do instead of silently leaving a stale page.
+    var _chainKey=function(c){ try{ return String(BigInt(c)); }catch(_){ return String(c); } }, _lastChain=null;
+    var _autoReload=function(why){
+      var now=Date.now(), last=0;
+      try{ last=Number(sessionStorage.getItem('qp-auto-reload')||0); }catch(_){}
+      if(now-last < 15000){
+        console.warn('automatic reload suppressed ('+why+'): the last one was '+Math.round((now-last)/1000)+' s ago');
+        toast('<span class="mut">Your wallet changed ('+esc(why)+'). Reload the page once it settles.</span>');
+        return;
+      }
+      try{ sessionStorage.setItem('qp-auto-reload', String(now)); }catch(_){}
+      location.reload();
+    };
+    try{ window.ethereum.request({method:'eth_chainId'}).then(function(c){ if(_lastChain===null) _lastChain=_chainKey(c); }).catch(function(){}); }catch(_){}
+    window.ethereum.on&&window.ethereum.on('accountsChanged',function(a){
+      var next=(a && a.length) ? String(a[0]).toLowerCase() : null;
+      if(_connecting || !connected) return;                       // nothing on screen depends on a wallet yet
+      if(next && account && next===account.toLowerCase()) return; // the same account, re-sent
+      if(!next) _rememberConnect(false);                           // the wallet disconnected this site
+      _autoReload('account');
+    });
+    window.ethereum.on&&window.ethereum.on('chainChanged',function(c){
+      var next=_chainKey(c);
+      if(_lastChain===null){ _lastChain=next; return; }            // a startup announcement is the baseline, not a change
+      if(next===_lastChain) return;                                // the same chain, re-sent
+      _lastChain=next;
+      if(!connected && !_connecting){ syncNetChip(c); return; }   // not using a wallet yet: just show the new network
+      _autoReload('network');
+    });
+  }
+
+  // ── init ──
+  // ── mint window clock: reads the phase boundaries from chain, ticks locally, re-reads every 10s ──
+  function _fmt(s){ s=Math.max(0,Math.floor(s)); var m=Math.floor(s/60), x=s%60; return m+':'+(x<10?'0':'')+x; }
+  function _fmtLong(s){ s=Math.max(0,Math.floor(s)); var d=Math.floor(s/86400), h=Math.floor(s%86400/3600),
+    m=Math.floor(s%3600/60), x=s%60; return d>0 ? d+'d '+h+'h '+m+'m' : (h>0 ? h+'h '+m+'m' : m+'m '+x+'s'); }
+  // the big delegation countdown: a clock that visibly ticks every second (h/m alone looks frozen at 44px)
+  function _fmtClock(s){ s=Math.max(0,Math.floor(s)); var d=Math.floor(s/86400), h=Math.floor(s%86400/3600),
+    m=Math.floor(s%3600/60), x=s%60, p=function(v){ return (v<10?'0':'')+v; };
+    return (d>0 ? d+'d ' : '')+p(h)+':'+p(m)+':'+p(x); }
+  function _chainNow(){ return Math.floor(Date.now()/1000)+_clkOffset; }
+  var _capsSeen={}, _clkConst={};
+  async function loadMintClock(){
+    if(!LIVE) return;
+    try{
+      var p=ro(), nft=new ethers.Contract(NFT,NFT_ABI,p);
+      // Before DeployNFT the address is empty. Say "not deployed yet" instead of failing every 10 s.
+      await checkNftCode(p);
+      if(_nftCode===false){ _clkFailed=false; renderClock(); renderGate(); return; }
+      // Speed: every read below starts in the same tick, so the shared provider sends them as one batched request
+      // (plus a second one for the window ends once the mint has started). They used to go one at a time, about nine
+      // round trips per tick on a phone. MAX_SUPPLY and GTD_WINDOW are constants, so each is read until it lands once.
+      var konst=function(name){ return _clkConst[name]!=null ? Promise.resolve(_clkConst[name])
+        : nft[name]().then(function(v){ _clkConst[name]=v; return v; }); };
+      var mintedP=nft.totalMinted(), supplyP=konst('MAX_SUPPLY'), launchedP=nft.launched();
+      konst('mintPrice').catch(function(){}); // the public layout's price line; fixed for the mint, read until it lands
+      [mintedP, supplyP, launchedP].forEach(function(q){ q.catch(function(){}); }); // read below; never an unhandled rejection
+      // Per-window caps from the contract. These were literals ("cap 3 / 8 / 20") that nothing tied to
+      // GTD_CAP / OVERFLOW_CAP / PUBLIC_CAP, while index.html's fallback said 10 for public. A failed read
+      // leaves the '·' placeholder, never a guessed number.
+      // Constants, so each is read until it lands once, not on every 10s clock tick.
+      [['mc-gtd-cap','GTD_CAP'],['mc-ov-cap','OVERFLOW_CAP'],['mc-pub-cap','PUBLIC_CAP']].forEach(function(c){
+        if(_capsSeen[c[0]]) return;
+        nft[c[1]]().then(function(v){ var s=$(c[0]); if(s){ s.textContent=String(Number(v)); _capsSeen[c[0]]=true; } }).catch(function(){});
+      });
+      var head=await Promise.all([ withTimeout(p.getBlock('latest')), withTimeout(nft.mintStart()) ]);
+      var blk=head[0]; if(blk) _clkOffset=Number(blk.timestamp)-Math.floor(Date.now()/1000);
+      var t0=Number(head[1]); _clk.mintStart=t0; _clkRead=true;
+      if(t0>0){
+        var win=await Promise.all([ konst('GTD_WINDOW'), nft.publicOpensAt(), nft.publicMintClosesAt() ]);
+        _clk.gtdEnd=t0+Number(win[0]);
+        _clk.pubOpen=Number(win[1]);
+        _clk.pubClose=Number(win[2]);
+      }
+      try{ var tm=Number(await mintedP), ms=Number(await supplyP);
+        var el=$('mc-minted'); if(el) el.innerHTML='<b>'+tm+'</b> / '+ms+' minted';
+        var wasSold=_soldOut; _supplyN=ms; _soldOut = ms>0 && tm>=ms;
+        if(_soldOut && !wasSold && connected){ try{ renderVaults(); }catch(e){} } // a wallet already on the page sees it at once
+      }catch(e){}
+      // once launched, the main app opens on the packs/dashboard, so this nav link points there — relabel it
+      try{ _clkLaunched=!!(await launchedP); if(_clkLaunched){ var _na=$('nav-app'); if(_na) _na.textContent='Packs'; } }catch(e){}
+      try{ var wasRev=_revealed; _revealed=!!(await nft.isRevealed());
+        if(_revealed){ _loadSplit(p, nft); if(!wasRev && connected){ try{ renderVaults(); }catch(e){} } }
+      }catch(e){}
+      _clkFailed=false;
+      renderClock(); renderGate();
+    }catch(e){ if(!_clkRead){ _clkFailed=true; renderGate(); } }
+  }
+  // PUBLIC LAYOUT SWITCH: the moment the chain says the public window is open, "/" and
+  // "/mint" turn themselves into a plain public mint page (body.public-mode: .nopub hidden, .pub-only shown), with no
+  // publish needed at the open. Chain time, not the device clock, and publicOpensAt() read live, so a soft-close that
+  // pushes the open later moves the switch with it. The /delegate page never switches: it stays the place to review
+  // or revoke a delegation. After the close it stays public, and the mint card says the mint is over.
+  var _publicMode=false, _isDelegatePath=/^\/delegate(\.html)?\/?$/i.test(location.pathname);
+  function _syncPublicMode(){
+    var pub = !_isDelegatePath && _clk.mintStart>0 && _clk.pubOpen>0 && _chainNow()>=_clk.pubOpen;
+    if(pub){
+      var pr=$('pf-price'); if(pr && _clkConst.mintPrice!=null) pr.textContent=ethers.formatEther(_clkConst.mintPrice)+' ETH per pass';
+      var pc=$('pf-cap'), mc=$('mc-pub-cap'); if(pc && mc && /\d/.test(mc.textContent)) pc.textContent=mc.textContent;
+      var cl=$('pf-close'); if(cl && _clk.pubClose) cl.textContent=new Date(_clk.pubClose*1000).toLocaleString('en-US',
+        {timeZone:'America/Phoenix', weekday:'long', month:'long', day:'numeric', hour:'numeric', minute:'2-digit'})+' Phoenix';
+      var nf=$('pf-nft'); if(nf && !nf.textContent) nf.textContent=NFT;
+    }
+    if(pub===_publicMode) return;
+    _publicMode=pub;
+    document.body.classList.toggle('public-mode', pub);
+    if(connected){ vaultData={}; selVault=null; afterEthers(refreshAll)({quiet:true}); } // rebuild the mint card for the new mode
+  }
+  function renderClock(){
+    if(!$('mintclock')) return;
+    var g=$('mc-gtd'), o=$('mc-ov'), u=$('mc-pub'), c=$('mc-count');
+    [g,o,u].forEach(function(e){ if(e) e.classList.remove('on'); });
+    var now=_chainNow(), msg;
+    if(_nftCode===false){
+      msg='Mint has not opened yet';
+      var _mm=$('mc-minted'); if(_mm) _mm.textContent='Art Pass not deployed yet'; // nothing to count yet, and not a failed read
+    }
+    else if(_clk.mintStart===0){
+      msg = now < MINT_SCHEDULED_AT
+        ? 'Mint opens in <b>'+_fmtLong(MINT_SCHEDULED_AT-now)+'</b> &middot; '+MINT_SCHEDULED_PHX
+        : 'Mint opening shortly &middot; '+MINT_SCHEDULED_PHX; // scheduled time passed, the start not yet on chain
+    }
+    else if(_revealed){ msg='Revealed &middot; every rarity is final'; }
+    else if(_soldOut){ msg='Sold out &middot; every Art Pass is minted'; }
+    else if(now < _clk.gtdEnd){ if(g)g.classList.add('on'); msg='GTD window &middot; top-up in <b>'+_fmtLong(_clk.gtdEnd-now)+'</b>'; }
+    else if(now < _clk.pubOpen){ if(o)o.classList.add('on'); msg='Top-Up window &middot; public in <b>'+_fmtLong(_clk.pubOpen-now)+'</b>'; }
+    else if(now < _clk.pubClose){ if(u)u.classList.add('on'); msg='Public window &middot; closes in <b>'+_fmtLong(_clk.pubClose-now)+'</b>'; }
+    else { msg='Mint closed'; }
+    c.innerHTML=msg;
+    var hk=$('hero-k');
+    if(hk) hk.textContent = (_nftCode===false || _clk.mintStart===0) ? 'Art Pass mint · opens soon'
+      : _revealed ? 'Art Pass mint · complete'
+      : _soldOut ? 'The mint is sold out'
+      : now < _clk.pubOpen ? 'The allowlist mint is live'
+      : now < _clk.pubClose ? 'The public mint is live' : 'The mint is over';
+    _syncPublicMode();
+    _applySoldOut(); // after _syncPublicMode, which rewrites the facts box every tick
+    _applyRevealed(); // and after _applySoldOut, whose lines it replaces once the beacon has landed
+  }
+  // SOLD OUT copy for the parts of the page that no wallet event re-renders: the public intro line, the facts box,
+  // and (with no wallet connected) the mint card's status line and button. A connected card is handled by
+  // renderVaults/updateMintBtn through mintState() === 'closed'.
+  function _applySoldOut(){
+    if(!_soldOut) return;
+    // never write over the revealed lede: if isRevealed() lands on a tick where the supply read failed, the
+    // revealed copy is already in place and the sold-out line would replace it for good (dataset.rev blocks the redo).
+    var pl=$('pub-lede'); if(pl && pl.dataset.sold!=='1' && pl.dataset.rev!=='1'){ pl.dataset.sold='1';
+      pl.textContent='Sold out: all '+(_supplyN||3500).toLocaleString('en-US')+' Art Passes are minted. Rarity reveals next, then the QPULL launch.'; }
+    var ch=$('check-h'); if(ch) ch.textContent='Art Pass details';
+    var ck=$('pf-close-k'), cv=$('pf-close'); if(ck) ck.textContent='Status'; if(cv) cv.textContent='Sold out, all '+(_supplyN||3500).toLocaleString('en-US')+' minted';
+    if(!connected){
+      var b=$('mintBtn'); if(b && !_pend.mint){ b.disabled=true; b.textContent='Sold out'; }
+      var t=$('mint-text'), s=$('mint-status'), line=_soldLine();
+      if(t && t.textContent!==line){ t.textContent=line; if(s) s.className='status wait'; }
+    }
+  }
+
+  // REVEALED copy. Same shape as _applySoldOut, and it runs after it, so the sold-out lines are replaced the tick
+  // the beacon lands. Every number comes from the chain: the supply from the NFT, the split from the beacon.
+  function _applyRevealed(){
+    if(!_revealed) return;
+    var n=(_supplyN||3500).toLocaleString('en-US');
+    var split=_split ? _split[0].toLocaleString('en-US')+' Common, '+_split[1].toLocaleString('en-US')+' Uncommon, '
+      +_split[2].toLocaleString('en-US')+' Rare and '+_split[3].toLocaleString('en-US')+' Super Rare' : '';
+    var pl=$('pub-lede'); if(pl && pl.dataset.rev!=='1' && (_split || pl.dataset.sold==='1')){
+      if(_split) pl.dataset.rev='1';
+      pl.innerHTML='All '+n+' Art Passes are minted and revealed'+(split ? ': '+split : '')
+        +'. The art is drawn onchain by the contract itself, so it can never change. '
+        +'<a href="'+OPENSEA+'" target="_blank" rel="noopener noreferrer">See the collection on OpenSea</a>.';
+    }
+    // the mint card is dead once the beacon lands: swap it for the "what happens next" card in the same slot
+    var cd=$('card-delegate'); if(cd) cd.hidden=true;
+    var cn=$('card-next'); if(cn) cn.hidden=false;
+    // the nav and the tab stop saying "Mint": there is nothing to mint, the page is now about the pass itself.
+    // It stays "Art Pass" until the app page takes over "/" at the token launch and this one moves to /mint.
+    document.body.classList.add('revealed');
+    var nm=$('nav-mint'); if(nm) nm.textContent='Art Pass';
+    var nmd=$('nav-mint-d'); if(nmd) nmd.textContent='Art Pass';
+    if(document.title.indexOf('Art Pass')<0) document.title='QuoPull \u00b7 Art Passes';
+    // and the details card stops describing the sale and starts describing the pass
+    ['pf-row-price','pf-row-cap','pf-row-site','pf-row-phone'].forEach(function(id){ var e=$(id); if(e) e.hidden=true; });
+    ['pf-row-tiers','pf-row-daily','pf-row-holder','pf-row-hold4','pf-row-supply'].forEach(function(id){ var e=$(id); if(e) e.hidden=false; });
+    var h1=$('hero-h1'); if(h1) h1.textContent='The art is revealed.';
+    var ch=$('check-h'); if(ch) ch.textContent='Art Pass details';
+    var ck=$('pf-close-k'), cv=$('pf-close'); if(ck) ck.textContent='Status';
+    if(cv) cv.textContent='Revealed, all '+n+' minted';
+    if(!connected){
+      var b=$('mintBtn'); if(b && !_pend.mint){ b.disabled=true; b.textContent='Sold out'; }
+      var t=$('mint-text'), s2=$('mint-status');
+      var line='Revealed. All '+n+' Art Passes are minted and their rarity is final.';
+      if(t && t.textContent!==line){ t.textContent=line; if(s2) s2.className='status wait'; }
+    }
+  }
+
+  // ── delegation gate: visible but LOCKED for now (no countdown) ──
+  function renderGate(){
+    var og=$('opengate'), cd=$('og-cd'), conn=$('conn'), k=$('og-k'), when=$('og-when'), note=$('og-note');
+    if(og) og.hidden=false; if(cd) cd.hidden=true; // no countdown yet
+    if(!featureOpen()){
+      if(_delegationScheduled()){
+        var _left=DELEGATION_OPENS_AT-_deviceNow(), _dl=_localTime(DELEGATION_OPENS_AT), _ml=_localTime(MINT_SCHEDULED_AT);
+        if(k) k.textContent='Delegation opens';
+        if(when) when.textContent=DELEGATION_OPENS_PHX+(_dl ? ' ('+_dl+' where you are)' : '');
+        if(cd){ cd.hidden=false; cd.textContent=_fmtClock(_left); }
+        if(note) note.textContent='You then have 24 hours to delegate before the mint opens '+MINT_SCHEDULED_PHX
+          +(_ml ? ' ('+_ml+' where you are)' : '')+'. You can read the flow below now.';
+        if(conn && !connected){ conn.disabled=true; conn.dataset.gated='1'; conn.textContent='Opens soon'; }
+        return;
+      }
+      if(k) k.textContent='Delegation'; if(when) when.textContent='Opens soon';
+      if(note) note.textContent='You can read the flow below now. Connecting and delegating are locked until the window opens.';
+      if(conn && !connected){ conn.disabled=true; conn.dataset.gated='1'; conn.textContent='Opens soon'; }
+    } else {
+      if(conn && conn.dataset.gated==='1'){ delete conn.dataset.gated; conn.disabled=false; conn.textContent=connected?short(account):'Connect wallet'; }
+      // mintState() is null until the first mint-clock read lands, and this used to fall through to
+      // the green "Delegation is open" banner, so a page loaded after the mint closed flashed the wrong "open" state for
+      // a few seconds. Until the phase is known, say it is being read (or that the read failed), not that it is open.
+      var _ms=mintState();
+      if(LIVE && _ms===null){
+        if(og){ og.classList.remove('open'); og.classList.remove('closed'); }
+        if(k) k.textContent='Delegation';
+        if(when) when.textContent = _clkFailed ? 'Could not read the mint status just now.' : 'Reading the mint status…';
+        if(note) note.textContent = _clkFailed ? 'The page tries again every 10 seconds. Refresh before delegating.' : '';
+        return;
+      }
+      // After the mint, "Delegation is open" invited a setup that can no longer mint anything
+      if(_ms==='closed'){
+        if(og){ og.classList.remove('open'); og.classList.add('closed'); }
+        if(k) k.textContent='The mint is over';
+        if(when) when.textContent='Delegations can no longer mint Art Passes.';
+        if(note) note.textContent='Delegations you made stay on the delegate.xyz registry until you revoke them below.';
+        return;
+      }
+      if(og){ og.classList.remove('closed'); og.classList.add('open'); }
+      // mint day: once the mint is live, this banner must not read as "delegation is the way in"
+      if(_ms==='open'){
+        if(k) k.textContent='The mint is open';
+        if(when) when.textContent='Connect your allowlisted wallet to mint, or delegate a hot wallet to mint for you.';
+      } else {
+        if(k) k.textContent='Delegation is open';
+        if(when) when.textContent='Connect your allowlisted wallet to delegate a hot mint wallet.';
+      }
+      // Delegation-only phase. The scoped delegation is written now, against the address listed under "Verify
+      // before you sign"; the hot wallet mints once the contract is deployed and the mint opens.
+      if(note){
+        if(LIVE && _nftCode===false){
+          note.textContent = 'The Art Pass contract is not deployed yet. A scoped delegation made now names the address it will be deployed at (listed below), and your hot wallet can mint for you once the mint opens.';
+        } else if(_ms==='pre'){
+          var _loc=_scheduledLocal();
+          note.textContent = 'The mint opens '+MINT_SCHEDULED_PHX+(_loc ? ' ('+_loc+' where you are)' : '')+'. Delegate before then.';
+        } else {
+          note.textContent = '';
+        }
+      }
+    }
+  }
+  renderGate();
+
+  // Re-read everything the phase can change. loadAllowlist latches _alTried so it only ever ran once;
+  // clearing it here also re-checks the served allowlist against the on-chain root, which is what catches
+  // a root that moved under the page.
+  async function refreshAll(opts){
+    // Locked: stay informational. A refresh must not start the chain reads the locked page promises not to make.
+    if(!featureOpen()){ renderGate(); return; }
+    // The timer refresh is silent, and no refresh overwrites the toast of a transaction still in flight
+    // (it carries the only link to that tx). Failures of a silent refresh go to the console.
+    var quiet = !!(opts && opts.quiet) || txBusy();
+    var b=$('refreshBtn'); if(b){ b.disabled=true; b.style.opacity='.5'; }
+    try{
+      _alTried=false; _alPromise=null;
+      await loadAllowlist(); // _al is replaced only once the new copy has loaded (no null window for other readers)
+      if(typeof loadMintClock==='function') await loadMintClock();
+      if(typeof renderClock==='function') renderClock();
+      if(connected){
+        if(typeof refreshHolder==='function')   await refreshHolder();
+        if(typeof refreshDelegate==='function') await refreshDelegate();
+      }
+      renderGate();
+      if(typeof renderVerify==='function') renderVerify();
+      if(!quiet) toast('<span class="ok">Refreshed.</span>');
+    }catch(e){
+      if(!quiet) toast('<span class="bad">Refresh failed: '+esc(errMsg(e,'network error'))+'</span>');
+      else console.warn('background refresh failed:', e && (e.shortMessage||e.message||e));
+    }
+    if(b){ b.disabled=false; b.style.opacity=''; }
+  }
+  (function(){ var b=$('refreshBtn'); if(b) b.addEventListener('click', afterEthers(refreshAll)); })();
+  // Phase boundaries are the moment the page goes stale, so re-read on a slow timer as well as on click.
+  // A background tab skips the timer (a phone's battery and data, and less load on the RPC while thousands of tabs sit
+  // open through delegation and the mint), then catches up the moment it is visible again.
+  var _lastBgRefresh=0;
+  function bgRefresh(){
+    if(!featureOpen() || txBusy() || document.hidden) return;
+    _lastBgRefresh=Date.now();
+    afterEthers(refreshAll)({quiet:true});
+  }
+  setInterval(bgRefresh, 30000);
+  document.addEventListener('visibilitychange', function(){
+    if(!document.hidden && Date.now()-_lastBgRefresh > 10000) bgRefresh();
+  });
+
+  if(_delegationScheduled()){
+    setInterval(function(){ renderGate(); }, 1000);
+    // +2s so the reload lands after the instant rather than a hair before it and re-renders the countdown.
+    setTimeout(function(){ location.reload(); }, (DELEGATION_OPENS_AT-_deviceNow())*1000 + 2000);
+  }
+  if(!featureOpen()){ // the gate, not the raw switch (a testnet build on a public host is locked too)
+    // Locked pre-launch: keep the page purely informational — no chain reads, no live panels — so no
+    // network internals (chain id, contract addresses, mint counter) surface on the public page.
+    var _mc=$('mintclock'); if(_mc) _mc.hidden=true;
+    var _v=$('verify'); if(_v) _v.style.display='none';
+  } else {
+    if(!LIVE){ $('pend').classList.add('on'); }
+    else { $('mintclock').hidden=false; }
+    renderVerify();
+    syncNetChip();
+    _lastBgRefresh=Date.now();
+    // The panels above render now; the chain reads start once ethers has loaded.
+    _ethersReady.then(function(){
+      if(typeof ethers==='undefined') return; // the load failed, and the banner says so
+      if(LIVE){ loadMintClock(); setInterval(renderClock,1000); setInterval(function(){ if(!document.hidden) loadMintClock(); },10000); }
+      loadAllowlist();
+      if(_wantsReconnect()) connect({silent:true});
+    });
+  }
+})();
+</script>
+</body>
+</html>

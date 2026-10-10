@@ -1,0 +1,10 @@
+{
+  "filter_paths": "lib/|test/",
+  "exclude_informational": true,
+  "exclude_low": false,
+  "solc_remaps": [
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "forge-std/=lib/forge-std/src/"
+  ],
+  "detectors_to_exclude": "naming-convention,solc-version,assembly,low-level-calls,timestamp,similar-names,too-many-digits"
+}

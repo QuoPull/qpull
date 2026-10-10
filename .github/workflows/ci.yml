@@ -1,0 +1,108 @@
+name: ci
+
+# Build, contract sizes, unit and fuzz tests, invariants, solhint and slither on every push to main
+# and every pull request: the baseline the solskill and ethskills checklists ask for.
+#
+# Deliberately NOT here: anything that touches a key, an RPC secret, or a chain. The fork tests
+# need a live Robinhood Chain RPC and are rate limited, so they stay a local step.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  FOUNDRY_PROFILE: default
+
+jobs:
+  build-and-test:
+    name: build + test (no fork)
+    # macos-15-intel: a STANDARD GitHub-hosted runner with 4 vCPU and 14 GB. A cold via_ir build of this repo
+    # peaks at about 6.2 GB and takes ~30 minutes. ubuntu-latest was tried first and killed twice mid-compile
+    # (exit 143, "the runner has received a shutdown signal") because Linux standard runners for private repos
+    # have 8 GB. GitHub's larger runners would also fit but need a Team or Enterprise organization.
+    runs-on: macos-15-intel
+    # A cold via_ir build of this repo measures 29.5 minutes on a fast laptop, so a slower runner needs
+    # real headroom. Warm runs are a fraction of this.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      # PINNED, not `stable`. `stable` floats: CI silently changed behaviour the day Foundry shipped 1.8.4, which
+      # is what failed 48 tests at once (deployCodeTo started costing a nonce) and moved a gas measurement by
+      # 1.45M on identical contracts. Same rule as solc 0.8.26 and the commit-pinned dependencies. To upgrade,
+      # change this deliberately and recalibrate anything gas- or nonce-sensitive in the same commit.
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.4
+
+      # lib/ is gitignored and there are no submodules, so nothing fetches these but this.
+      - name: Install dependencies
+        run: ./.github/install-deps.sh
+
+      # via_ir is on, so a cold build is slow. Cache it across runs.
+      - name: Cache forge artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            out
+            cache
+          key: forge-${{ runner.os }}-${{ hashFiles('foundry.toml', 'src/**', 'script/**') }}
+          restore-keys: forge-${{ runner.os }}-
+
+      # NOT --force. `--force` discards exactly what the cache step above restores, so the cache had
+      # never once been used and every run paid the full cold cost: measured at 29.5 minutes and a
+      # 5.9 GB peak locally. forge's own `cache/` directory is what decides staleness; that is its job.
+      # KEEP A MAC RUNNER AWAKE FOR THE STEP, AND ONLY THE STEP. A self-hosted Mac that sleeps mid-build drops
+      # its connection and GitHub fails the job as "lost communication with the server". `caffeinate -i` holds
+      # an idle-sleep assertion for the life of the command, which changes no system setting and lapses when
+      # the step ends. Guarded, so the same step still runs on a Linux runner that has no caffeinate.
+      - name: Build
+        run: if command -v caffeinate >/dev/null; then caffeinate -i forge build; else forge build; fi
+
+      - name: Sizes
+        run: if command -v caffeinate >/dev/null; then caffeinate -i forge build --sizes; else forge build --sizes; fi
+
+      # test/fork/* needs a live RPC and gets rate limited, so it is excluded here and run locally. The
+      # invariant suites (test/Invariant*.t.sol and the other *Invariant.t.sol files) run in this step.
+      - name: Test
+        run: if command -v caffeinate >/dev/null; then caffeinate -i forge test --no-match-path "test/fork/*" -vv; else forge test --no-match-path "test/fork/*" -vv; fi
+
+  lint:
+    name: solhint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm i -g solhint@5
+      - run: solhint 'src/**/*.sol' 'script/**/*.sol'
+
+  slither:
+    name: slither
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Reports rather than gates, for now, so untriaged slither results do not block every run.
+    # Tighten once they are triaged.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      # PINNED, not `stable`. `stable` floats: CI silently changed behaviour the day Foundry shipped 1.8.4, which
+      # is what failed 48 tests at once (deployCodeTo started costing a nonce) and moved a gas measurement by
+      # 1.45M on identical contracts. Same rule as solc 0.8.26 and the commit-pinned dependencies. To upgrade,
+      # change this deliberately and recalibrate anything gas- or nonce-sensitive in the same commit.
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v1.8.4
+      - name: Install dependencies
+        run: ./.github/install-deps.sh
+      # v0.4.2, not @v0: crytic/slither-action has never published a floating major tag, so `@v0`
+      # failed to resolve at "Set up job" before a single step ran. Three seconds, every time.
+      - uses: crytic/slither-action@v0.4.2
+        with:
+          fail-on: high
+          slither-config: slither.config.json
+          target: .

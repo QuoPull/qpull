@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="Art Pass daily entry weights: Common 1, Uncommon 2, Rare 4, Super Rare 8">
+  <rect x="1" y="1" width="318" height="178" rx="12" fill="#E6E4DC" stroke="#C9C5B8"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#14161A">
+    <rect x="34" y="22" width="84" height="136" rx="8" fill="#F3F1EB" stroke="#14161A"/>
+    <circle cx="76" cy="70" r="22" fill="none" stroke="#D6321F" stroke-width="3"/>
+    <circle cx="76" cy="70" r="9" fill="#D6321F"/>
+    <text x="76" y="132" text-anchor="middle" font-size="10">ART PASS</text>
+    <text x="146" y="44">C</text>
+    <circle cx="180" cy="40" r="5" fill="#14161A"/>
+    <text x="146" y="78">U</text>
+    <circle cx="180" cy="74" r="5" fill="#14161A"/><circle cx="194" cy="74" r="5" fill="#14161A"/>
+    <text x="146" y="112">R</text>
+    <circle cx="180" cy="108" r="5" fill="#14161A"/><circle cx="194" cy="108" r="5" fill="#14161A"/><circle cx="208" cy="108" r="5" fill="#14161A"/><circle cx="222" cy="108" r="5" fill="#14161A"/>
+    <text x="146" y="146">SR</text>
+    <circle cx="180" cy="142" r="5" fill="#D6321F"/><circle cx="194" cy="142" r="5" fill="#D6321F"/><circle cx="208" cy="142" r="5" fill="#D6321F"/><circle cx="222" cy="142" r="5" fill="#D6321F"/><circle cx="236" cy="142" r="5" fill="#D6321F"/><circle cx="250" cy="142" r="5" fill="#D6321F"/><circle cx="264" cy="142" r="5" fill="#D6321F"/><circle cx="278" cy="142" r="5" fill="#D6321F"/>
+  </g>
+</svg>

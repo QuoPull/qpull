@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Docs page: static content, no wallet, no RPC. Tighter CSP than the app: fonts + inline only. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; upgrade-insecure-requests">
+<meta name="referrer" content="no-referrer">
+<title>QuoPull · how it works</title>
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="The plain language reference for QuoPull: the mint, the games, the tokens, and the launch order. Swap. Rip. Claim. On Robinhood Chain.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="QuoPull">
+<meta property="og:title" content="QuoPull · how it works">
+<meta property="og:description" content="The plain language reference for QuoPull: the mint, the games, the tokens, and the launch order. Swap. Rip. Claim. On Robinhood Chain.">
+<meta property="og:url" content="https://www.quopull.fun/docs">
+<meta property="og:image" content="https://www.quopull.fun/og-srclaim.png">
+<meta property="og:image:secure_url" content="https://www.quopull.fun/og-srclaim.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="QuoPull">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="QuoPull · how it works">
+<meta name="twitter:description" content="The plain language reference for QuoPull: the mint, the games, the tokens, and the launch order. Swap. Rip. Claim. On Robinhood Chain.">
+<meta name="twitter:image" content="https://www.quopull.fun/og-srclaim.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20400%20400'%3E%3Crect%20width='400'%20height='400'%20rx='88'%20fill='%23E6E4DC'/%3E%3Cpath%20d='M234.17,297.89%20C219.23,288.47%20207.00,280.44%20207.00,280.05%20C207.00,278.65%20230.12,264.95%20231.31,265.65%20C235.62,268.17%20307.69,313.49%20308.45,314.16%20C308.97,314.62%20298.59,315.00%20285.37,315.00%20L261.33,315.00%20L234.17,297.89%20Z%20M112.00,276.02%20L69.50,249.16%20L69.50,194.50%20L69.50,139.83%20L112.87,112.52%20L156.23,85.20%20L173.87,96.25%20C183.56,102.32%20191.84,107.59%20192.26,107.96%20C192.91,108.52%20171.15,123.00%20169.65,123.00%20C169.36,123.00%20166.22,121.18%20162.67,118.96%20L156.23,114.92%20L125.11,134.54%20L94.00,154.16%20L94.00,192.50%20L94.00,230.85%20L125.09,250.46%20L156.18,270.07%20L187.59,250.31%20L219.00,230.55%20L219.00,191.74%20L219.00,152.93%20L212.47,148.84%20L205.95,144.74%20L217.72,137.43%20C224.20,133.40%20229.88,130.01%20230.35,129.89%20C230.82,129.77%20234.31,131.61%20238.10,133.99%20L245.00,138.32%20L245.00,192.97%20L245.00,247.62%20L201.02,275.31%20C176.82,290.54%20156.46,302.97%20155.77,302.94%20C155.07,302.91%20135.38,290.80%20112.00,276.02%20Z%20M261.18,276.55%20C254.95,272.54%20249.46,268.86%20248.97,268.37%20C248.46,267.86%20259.58,260.25%20275.29,250.35%20L302.50,233.20%20L302.76,193.80%20L303.02,154.39%20L272.54,135.21%20C255.78,124.66%20241.64,115.90%20241.13,115.76%20C240.61,115.62%20226.20,124.28%20209.10,135.00%20L178.02,154.50%20L178.01,192.64%20L178.00,230.77%20L185.05,235.03%20C188.93,237.38%20191.74,239.60%20191.30,239.97%20C190.15,240.95%20171.92,252.44%20169.30,253.84%20C167.37,254.87%20166.21,254.45%20160.05,250.46%20L153.00,245.90%20L153.03,193.70%20L153.06,141.50%20L196.78,114.02%20C220.83,98.91%20241.40,86.55%20242.50,86.56%20C243.60,86.57%20263.74,98.71%20287.25,113.54%20L330.00,140.50%20L329.75,194.49%20L329.50,248.48%20L301.50,266.21%20C286.10,275.97%20273.27,283.92%20273.00,283.90%20C272.73,283.87%20267.40,280.56%20261.18,276.55%20Z'%20fill='%23D32F24'%20fill-rule='evenodd'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTq9wXulPFk.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+/* Fonts: inlined from Google Fonts css2?family=Archivo:wght@100..900&family=Martian+Mono:wght@300..700&display=swap
+   (2026-09-16). Inlining removes the render-blocking stylesheet request, and the two latin files are preloaded above.
+   Only the regular width and upright style are used, so the width axis and italics are not requested: that cut
+   Archivo's file from 90 KB to 35 KB. If you change the families or axes, re-copy this block and both preload URLs. */
+/* vietnamese */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLySOxKsv4RnUPU.woff2) format('woff2');unicode-range:U+0102-0103,U+0110-0111,U+0128-0129,U+0168-0169,U+01A0-01A1,U+01AF-01B0,U+0300-0301,U+0303-0304,U+0308-0309,U+0323,U+0329,U+1EA0-1EF9,U+20AB;}
+/* latin-ext */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLyTOxKsv4RnUPU.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+/* latin */@font-face{font-family:'Archivo';font-style:normal;font-weight:100 900;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/archivo/v25/k3kPo8UDI-1M0wlSV9XAw6lQkqWY8Q82sLydOxKsv4Rn.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+/* cyrillic-ext */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTe9wXulPFlwYA.woff2) format('woff2');unicode-range:U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;}
+/* cyrillic */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaT69wXulPFlwYA.woff2) format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+/* latin-ext */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTS9wXulPFlwYA.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+/* latin */@font-face{font-family:'Martian Mono';font-style:normal;font-weight:300 700;font-stretch:100%;font-display:swap;src:url(https://fonts.gstatic.com/s/martianmono/v6/2V0PKIcADoYhV6w87xrTKjs4CYElh_VS9YA4TlTnaTq9wXulPFk.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+</style>
+<style>
+:root{
+  --stock:#E6E4DC; --stock-deep:#DCD9CF; --stock-edge:#C9C5B8;
+  --card:#F3F1EB;
+  --ink:#14161A; --ink-soft:#5C5C57; --ink-faint:#918D80;
+  --accent:#D6321F;
+  --raffle:#C0392B; --holder:#27509E; --lead:#4A7C59;
+  --mono:"Martian Mono",ui-monospace,monospace;
+  --sans:"Archivo",system-ui,sans-serif;
+  --gut:clamp(16px,3vw,40px);
+  --top:57px;
+}
+[data-theme="dark"]{
+  --stock:#101215; --stock-deep:#181B20; --stock-edge:#2A2E35;
+  --card:#1E222A;
+  --ink:#E8E6DE; --ink-soft:#A5A29A; --ink-faint:#7A776F;
+  --accent:#E8563F;
+  --raffle:#E8695A; --holder:#6f9bd8; --lead:#7ed492;
+}
+[data-theme="dark"] body::before{opacity:.30}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth}
+body{margin:0; background:var(--stock); color:var(--ink); font-family:var(--sans);
+  font-variation-settings:"wdth" 100,"wght" 400; font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased}
+body::before{content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:radial-gradient(var(--stock-edge) .5px,transparent .5px); background-size:4px 4px; opacity:.4}
+a{color:inherit}
+
+/* topbar */
+.topbar{position:sticky; top:0; z-index:50; background:var(--stock); border-bottom:1px solid var(--ink)}
+.topbar-in{display:flex; align-items:center; gap:22px; padding:13px var(--gut); max-width:1280px; margin:0 auto}
+.mark{font-variation-settings:"wdth" 125,"wght" 800; font-size:19px; line-height:1; display:inline-flex; align-items:center; gap:7px; color:var(--accent); text-decoration:none}
+.mark svg{width:25px; height:25px; color:var(--accent)}
+.tnav{display:flex; gap:16px; list-style:none; margin:0; padding:0}
+.tnav a{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft); text-decoration:none; padding:3px 1px; border-bottom:1px solid transparent}
+.tnav a:hover{color:var(--ink); border-bottom-color:var(--accent)}
+.tnav a.on{color:var(--ink); border-bottom:2px solid var(--accent)}
+.spacer{margin-left:auto}
+.themebtn{width:32px; height:32px; padding:0; display:grid; place-items:center; border:1px solid var(--ink-faint); background:transparent; color:var(--ink); cursor:pointer}
+.themebtn:hover{border-color:var(--ink)} .themebtn svg{width:15px; height:15px}
+.hamburger{display:none; width:38px; height:38px; padding:0; align-items:center; justify-content:center; background:transparent; border:1px solid var(--ink-faint); border-radius:9px; color:var(--ink); cursor:pointer}
+.hamburger:hover{border-color:var(--ink)} .hamburger svg{width:20px; height:20px}
+.hamburger .cls{display:none}
+.hamburger[aria-expanded="true"] .mnu{display:none}
+.hamburger[aria-expanded="true"] .cls{display:block}
+.themebtn .moon{display:none} [data-theme="dark"] .themebtn .sun{display:none} [data-theme="dark"] .themebtn .moon{display:block}
+
+/* layout */
+.doc{position:relative; z-index:1; max-width:1280px; margin:0 auto; padding:0 var(--gut);
+  display:grid; grid-template-columns:246px minmax(0,1fr); gap:clamp(28px,4vw,72px); align-items:start}
+.side{position:sticky; top:var(--top); align-self:start; height:calc(100vh - var(--top)); overflow:auto; padding:30px 0 40px}
+.side .back{font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--ink-soft); text-decoration:none; display:inline-flex; gap:8px; padding-bottom:14px; border-bottom:1px solid var(--stock-edge); width:100%; margin-bottom:18px}
+.side .back:hover{color:var(--accent)}
+.navgroup{font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin:20px 0 8px}
+/* mobile "on this page" dropdown — hidden on desktop, replaces the chip nav on phones */
+.side-select-wrap{display:none; position:relative}
+.side-select-label{display:block; font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:7px}
+.side-select-wrap select{-webkit-appearance:none; appearance:none; width:100%; font-family:var(--mono); font-size:13px; color:var(--ink); background:var(--stock-deep); border:1px solid var(--ink-faint); border-radius:10px; padding:12px 40px 12px 14px; cursor:pointer; line-height:1.2}
+.side-select-wrap select:focus{outline:none; border-color:var(--accent)}
+.side-select-wrap::after{content:""; position:absolute; right:16px; bottom:16px; width:9px; height:9px; border-right:2px solid var(--ink-soft); border-bottom:2px solid var(--ink-soft); transform:rotate(45deg); pointer-events:none}
+.navgroup:first-of-type{margin-top:0}
+.side nav a{display:block; font-family:var(--mono); font-size:12px; letter-spacing:.01em; color:var(--ink-soft); text-decoration:none; padding:6px 0 6px 12px; border-left:2px solid var(--stock-edge)}
+.side nav a:hover{color:var(--ink); border-left-color:var(--ink-faint)}
+.side nav a.active{color:var(--ink); border-left-color:var(--accent); font-weight:600}
+
+.content{padding:34px 0 120px; min-width:0}
+.hero{margin-bottom:8px}
+.hero .eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent)}
+.hero h1{font-variation-settings:"wdth" 116,"wght" 800; font-size:clamp(30px,4.4vw,44px); line-height:1.03; letter-spacing:-.02em; margin:.3em 0 .25em; text-wrap:balance}
+.hero p{max-width:64ch; color:var(--ink-soft); font-size:16px; margin:0}
+.updated{font-family:var(--mono); font-size:9.5px; letter-spacing:.05em; color:var(--ink-faint); margin-top:16px}
+
+section.doc-sec{scroll-margin-top:calc(var(--top) + 20px); padding-top:46px; border-top:1px solid var(--stock-edge); margin-top:46px}
+section.doc-sec:first-of-type{border-top:none; margin-top:34px}
+.sec-eyebrow{font-family:var(--mono); font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-faint)}
+h2{font-variation-settings:"wdth" 112,"wght" 750; font-size:clamp(22px,2.8vw,30px); letter-spacing:-.018em; margin:.28em 0 .5em; line-height:1.1}
+h3{font-variation-settings:"wdth" 108,"wght" 700; font-size:16.5px; letter-spacing:-.01em; margin:1.7em 0 .4em}
+p{margin:0 0 1em; max-width:70ch}
+.content ul{max-width:70ch; padding-left:20px; margin:0 0 1em}
+.content li{margin:.3em 0}
+strong{font-variation-settings:"wght" 700}
+code{font-family:var(--mono); font-size:.86em; background:var(--card); border:1px solid var(--stock-edge); padding:1px 5px; border-radius:2px; word-break:break-word}
+
+/* spec tables */
+.spec{width:100%; border-collapse:collapse; margin:.4em 0 1.4em; font-size:14px; border:1px solid var(--stock-edge)}
+.spec caption{caption-side:top; text-align:left; font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); padding:0 0 8px}
+.spec th,.spec td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--stock-edge); vertical-align:top}
+.spec thead th{font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft); background:var(--stock-deep)}
+.spec tbody tr:last-child td{border-bottom:none}
+.spec td:first-child{font-family:var(--mono); font-size:12px; white-space:nowrap}
+.spec .num{font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.tblwrap{overflow-x:auto}
+
+/* callouts */
+.note{border:1px solid var(--stock-edge); border-left:3px solid var(--accent); background:var(--card); padding:12px 15px; margin:1.2em 0; font-size:14.5px}
+.note.info{border-left-color:var(--holder)} .note.tip{border-left-color:var(--lead)}
+.note .h{font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink-faint); display:block; margin-bottom:5px}
+.note p:last-child{margin-bottom:0}
+
+/* tier / game pills */
+.pill{display:inline-block; font-family:var(--mono); font-size:9px; letter-spacing:.08em; text-transform:uppercase; padding:2px 7px; border:1px solid currentColor; border-radius:2px}
+.pill.c{color:var(--ink-faint)} .pill.u{color:var(--lead)} .pill.r{color:var(--holder)} .pill.s{color:#B8860B}
+[data-theme="dark"] .pill.s{color:#E8B65A}
+.gtag{font-family:var(--mono); font-size:9px; letter-spacing:.1em; text-transform:uppercase; padding:2px 8px; color:var(--stock); border-radius:2px}
+.gtag.raffle{background:var(--raffle)} .gtag.holder{background:var(--holder)} .gtag.lead{background:var(--lead)}
+
+/* the loop diagram */
+.loop{display:grid; grid-template-columns:repeat(4,1fr); gap:0; border:1px solid var(--ink); margin:1.4em 0}
+.loop .step{padding:14px 15px; border-right:1px solid var(--stock-edge)}
+.loop .step:last-child{border-right:none}
+.launch-order{list-style:none; margin:1.5em 0; padding:0}
+.launch-order li{display:flex; gap:16px; align-items:flex-start; padding:16px 0; border-top:1px solid var(--stock-edge)}
+.launch-order li:first-child{border-top:none; padding-top:2px}
+.launch-order .lo-n{flex:none; width:30px; height:30px; display:grid; place-items:center; border:1px solid var(--accent); color:var(--accent); font-family:var(--mono); font-size:12px; border-radius:50%}
+.launch-order .lo-b b{display:block; font-size:15.5px; margin-bottom:3px}
+.launch-order .lo-d{color:var(--ink-soft); font-size:14px; line-height:1.5}
+.loop .n{font-family:var(--mono); font-size:10px; color:var(--accent); letter-spacing:.1em}
+.loop .step b{display:block; font-variation-settings:"wdth" 108,"wght" 700; font-size:14px; margin:5px 0 4px}
+.loop .step span{font-size:12.5px; color:var(--ink-soft); line-height:1.45}
+
+/* phases */
+.phase{border:1px solid var(--stock-edge); background:var(--card); padding:13px 16px; margin:0 0 12px}
+.phase h4{margin:0 0 4px; font-variation-settings:"wdth" 108,"wght" 700; font-size:15px; display:flex; align-items:baseline; gap:10px}
+.phase h4 .who{font-family:var(--mono); font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--stock); background:var(--ink); padding:2px 7px; border-radius:2px}
+.phase p{margin:.3em 0 0; font-size:14px; color:var(--ink-soft)}
+.phase p:first-of-type{color:var(--ink)}
+
+/* participant FAQ: one <details> per question, deep-linkable by id */
+.faq-intro{max-width:70ch}
+.faq-group{scroll-margin-top:calc(var(--top) + 20px); display:flex; align-items:baseline; gap:10px}
+.faq-group .k{font-family:var(--mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent)}
+.faq details{border:1px solid var(--stock-edge); background:var(--card); margin:0 0 8px; max-width:78ch;
+  scroll-margin-top:calc(var(--top) + 20px)}
+.faq summary{cursor:pointer; list-style:none; position:relative; padding:11px 44px 11px 15px;
+  font-variation-settings:"wdth" 104,"wght" 640; font-size:15px; line-height:1.4}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+"; position:absolute; right:16px; top:8px; font-family:var(--mono); font-size:16px;
+  color:var(--accent); transition:transform .15s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq summary:hover{color:var(--accent)}
+.faq summary:focus-visible{outline:2px solid var(--accent); outline-offset:-2px}
+.faq .a{padding:0 15px 13px; font-size:14.5px}
+.faq .a p{margin:0 0 .7em}
+.faq .a p:last-child{margin-bottom:0}
+.faq .a ul{margin:0 0 .7em; padding-left:20px}
+.faq .a li{margin:.25em 0}
+.faq .live{font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-faint);
+  border:1px solid var(--stock-edge); padding:1px 6px; border-radius:2px; white-space:nowrap}
+
+footer{border-top:1px solid var(--stock-edge); margin-top:60px; padding:22px 0 50px; font-family:var(--mono); font-size:9.5px; letter-spacing:.04em; color:var(--ink-faint); line-height:1.7}
+
+@media (max-width:900px){
+  .doc{grid-template-columns:1fr; gap:0}
+  .side{position:static; height:auto; overflow:visible; padding:16px 0 18px; border-bottom:1px solid var(--stock-edge)}
+  .side nav, .side .navgroup{display:none}
+  .side-select-wrap{display:block}
+  .side .back{margin-bottom:14px}
+  .loop{grid-template-columns:1fr 1fr}
+  .topbar-in{flex-wrap:wrap}
+  .hamburger{display:inline-flex}
+  .tnav{display:none}
+  .topbar-in.menu-open .tnav{display:flex; order:5; width:100%; justify-content:center; gap:26px;
+    border-top:1px solid var(--stock-edge); padding-top:12px; margin-top:4px}
+  .topbar-in.menu-open .tnav{flex-wrap:wrap; row-gap:10px}
+  .topbar-in.menu-open .tnav a{font-size:12px; white-space:nowrap}
+}
+@media (max-width:560px){ .loop{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<script src="/terms-gate.js"></script>
+<script src="/daily-checklist.js"></script>
+
+<header class="topbar">
+  <div class="topbar-in" id="topbarIn">
+    <a class="mark" href="/"><svg viewBox="69 85 260 229" aria-hidden="true"><path d="M234.17,297.89 C219.23,288.47 207.00,280.44 207.00,280.05 C207.00,278.65 230.12,264.95 231.31,265.65 C235.62,268.17 307.69,313.49 308.45,314.16 C308.97,314.62 298.59,315.00 285.37,315.00 L261.33,315.00 L234.17,297.89 Z M112.00,276.02 L69.50,249.16 L69.50,194.50 L69.50,139.83 L112.87,112.52 L156.23,85.20 L173.87,96.25 C183.56,102.32 191.84,107.59 192.26,107.96 C192.91,108.52 171.15,123.00 169.65,123.00 C169.36,123.00 166.22,121.18 162.67,118.96 L156.23,114.92 L125.11,134.54 L94.00,154.16 L94.00,192.50 L94.00,230.85 L125.09,250.46 L156.18,270.07 L187.59,250.31 L219.00,230.55 L219.00,191.74 L219.00,152.93 L212.47,148.84 L205.95,144.74 L217.72,137.43 C224.20,133.40 229.88,130.01 230.35,129.89 C230.82,129.77 234.31,131.61 238.10,133.99 L245.00,138.32 L245.00,192.97 L245.00,247.62 L201.02,275.31 C176.82,290.54 156.46,302.97 155.77,302.94 C155.07,302.91 135.38,290.80 112.00,276.02 Z M261.18,276.55 C254.95,272.54 249.46,268.86 248.97,268.37 C248.46,267.86 259.58,260.25 275.29,250.35 L302.50,233.20 L302.76,193.80 L303.02,154.39 L272.54,135.21 C255.78,124.66 241.64,115.90 241.13,115.76 C240.61,115.62 226.20,124.28 209.10,135.00 L178.02,154.50 L178.01,192.64 L178.00,230.77 L185.05,235.03 C188.93,237.38 191.74,239.60 191.30,239.97 C190.15,240.95 171.92,252.44 169.30,253.84 C167.37,254.87 166.21,254.45 160.05,250.46 L153.00,245.90 L153.03,193.70 L153.06,141.50 L196.78,114.02 C220.83,98.91 241.40,86.55 242.50,86.56 C243.60,86.57 263.74,98.71 287.25,113.54 L330.00,140.50 L329.75,194.49 L329.50,248.48 L301.50,266.21 C286.10,275.97 273.27,283.92 273.00,283.90 C272.73,283.87 267.40,280.56 261.18,276.55 Z" fill="currentColor" fill-rule="evenodd"/></svg>QuoPull</a>
+    <ul class="tnav">
+      <li><a href="/">Packs</a></li>
+      <li><a href="/docs.html" class="on">Docs</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+    </ul>
+    <div class="spacer"></div>
+    <button class="themebtn" id="theme" aria-label="Switch colour theme" title="Switch theme">
+      <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>
+      <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.4 8.4 0 1 0 10.2 10.2z"/></svg>
+    </button>
+    <button class="hamburger" id="hamburger" aria-label="Menu" aria-expanded="false" aria-controls="topbarIn">
+      <svg class="mnu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      <svg class="cls" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="doc">
+  <aside class="side">
+    <a class="back" href="/">&larr; Packs</a>
+    <label class="side-select-wrap">
+      <span class="side-select-label">On this page</span>
+      <select id="sideSelect" aria-label="Jump to a section">
+        <optgroup label="Overview">
+          <option value="overview">What QuoPull is</option>
+        </optgroup>
+        <optgroup label="FAQ">
+          <option value="faq">Participant FAQ</option>
+        </optgroup>
+        <optgroup label="The mint">
+          <option value="mint">Art Passes</option>
+          <option value="allowlist">Allowlist &amp; delegation</option>
+          <option value="reserve">Treasury reserve</option>
+        </optgroup>
+        <optgroup label="The games">
+          <option value="raffle">Daily raffle</option>
+          <option value="holder">Holder draw</option>
+          <option value="leaderboard">Leaderboard</option>
+        </optgroup>
+        <optgroup label="Tokens &amp; market">
+          <option value="tokens">QPULL &amp; QUOTRON</option>
+          <option value="liquidity">Liquidity &amp; tax</option>
+          <option value="trading">Launch protections</option>
+        </optgroup>
+        <optgroup label="Reference">
+          <option value="testing">Testing</option>
+          <option value="contracts">Contracts</option>
+          <option value="launch">Launch order</option>
+        </optgroup>
+      </select>
+    </label>
+    <div class="navgroup">Overview</div>
+    <nav>
+      <a href="#overview" data-t>What QuoPull is</a>
+    </nav>
+    <div class="navgroup">FAQ</div>
+    <nav>
+      <a href="#faq" data-t>Participant FAQ</a>
+    </nav>
+    <div class="navgroup">The mint</div>
+    <nav>
+      <a href="#mint" data-t>Art Passes</a>
+      <a href="#allowlist" data-t>Allowlist &amp; delegation</a>
+      <a href="#reserve" data-t>Treasury reserve</a>
+    </nav>
+    <div class="navgroup">The games</div>
+    <nav>
+      <a href="#raffle" data-t>Daily raffle</a>
+      <a href="#holder" data-t>Holder draw</a>
+      <a href="#leaderboard" data-t>Leaderboard</a>
+    </nav>
+    <div class="navgroup">Tokens &amp; market</div>
+    <nav>
+      <a href="#tokens" data-t>QPULL &amp; QUOTRON</a>
+      <a href="#liquidity" data-t>Liquidity &amp; tax</a>
+      <a href="#trading" data-t>Launch protections</a>
+    </nav>
+    <div class="navgroup">Reference</div>
+    <nav>
+      <a href="#contracts" data-t>Contracts</a>
+      <a href="#launch" data-t>Launch order</a>
+    </nav>
+  </aside>
+
+  <main class="content">
+    <div class="hero">
+      <span class="eyebrow">Protocol documentation</span>
+      <h1>How QuoPull works</h1>
+      <p>QuoPull is a token funded pack raffle protocol on Robinhood Chain. Trading fees fund onchain prize games, and a fixed supply NFT (the Art Pass) is your seat at the table. This page is the plain language reference for every moving part, drawn straight from the contracts.</p>
+      <div class="updated">Drawn from the contract code, ahead of launch.</div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <section class="doc-sec" id="overview">
+      <span class="sec-eyebrow">01 / Overview</span>
+      <h2>What QuoPull is</h2>
+      <p>Everything hangs off one loop: people mint Art Passes and trade the token, a trade tax funds three prize games, and winners are paid a prize token. Once the pool is seeded, no team key can move the liquidity. Before that, the mint proceeds pass through team controlled addresses, as described under <a href="#mint">Art Passes</a>.</p>
+
+      <div class="loop">
+        <div class="step"><span class="n">01</span><b>Mint</b><span>Buy Art Passes for ETH. Proceeds split into three buckets: 80% for liquidity, 10% prize seed, 10% team + operations.</span></div>
+        <div class="step"><span class="n">02</span><b>Trade</b><span>Swap $QPULL in one locked pool. A trade tax flows to the Treasury (buys 4%, early sells more, stepping down to 4%).</span></div>
+        <div class="step"><span class="n">03</span><b>Convert</b><span>The Treasury turns the tax into $QUOTRON prize inventory and fills three vaults.</span></div>
+        <div class="step"><span class="n">04</span><b>Win</b><span>Daily raffle, weekly holder draw, weekly leaderboard pay $QUOTRON to winners.</span></div>
+      </div>
+
+      <div class="note info">
+        <span class="h">Two tokens, do not mix them up</span>
+        <p><strong>$QPULL</strong> is the fair launch token you trade: fixed 1,000,000,000 supply, ownerless, 100% paired into the locked liquidity pool. <strong>$QUOTRON</strong> is the separate prize token the Treasury buys with the trade tax and pays to game winners. You trade QPULL; you win QUOTRON.</p>
+      </div>
+
+      <p>Three properties define the design:</p>
+      <ul>
+        <li><strong>Provably fair randomness.</strong> Every rarity roll and every draw is seeded by a time locked Drand BLS beacon that does not exist yet when the outcome is committed, verified onchain. Anyone can recompute a roll.</li>
+        <li><strong>Fully onchain art.</strong> Art Pass images and metadata live in the contract itself (SSTORE2), no IPFS, no server that can go dark.</li>
+        <li><strong>Locked liquidity.</strong> The launch pool position is added once into a lock with no removal code anywhere. It cannot be pulled, because the function to pull it does not exist.</li>
+      </ul>
+    </section>
+
+    <!-- PARTICIPANT FAQ. Every answer was checked against the contracts in src/ and the deploy
+         scripts in script/; each one rests on a specific function or constant in those files.
+         Numbers the owner can change (ticket price, per-buy pack limit, pot caps, winners per day) and the per-buy
+         ETH cap fixed at deploy are described by rule here, never as a figure, so this page cannot go stale; the app
+         reads the live values. Copy rules: no em or en dashes, the team cut is "team + operations". -->
+    <section class="doc-sec faq" id="faq">
+      <span class="sec-eyebrow">FAQ / For participants</span>
+      <h2>Participant FAQ</h2>
+      <p class="faq-intro">Short answers to the questions people ask before they buy, rip or claim. Every answer describes what the contracts do. Where a number is a setting the owner can change, the answer gives the rule and the app shows the live figure. A <b>game day</b> is a 24 hour period on the game clock, which starts at the scheduled launch time; it is not a calendar day.</p>
+
+      <h3 class="faq-group" id="faq-buy"><span class="k">01</span>Buying QPULL at launch</h3>
+
+      <details id="faq-first-hour">
+        <summary>Can I buy in the first hour?</summary>
+        <div class="a">
+          <p>Only if the wallet that signs the buy holds at least one Art Pass. For the first hour after the pool is created, the pool checks the pass balance of the wallet that signed the transaction, and a buy from a wallet with no pass is refused. Nothing is swapped and you pay only gas.</p>
+          <p>A pass anywhere else does not count: not in another wallet you own, not in a cold wallet or vault you do not sign the buy with, not in a Safe or other smart contract wallet, and not one you have only delegated. <strong>Move one pass into the wallet you will buy from before launch</strong>, or wait for the hour to end.</p>
+        </div>
+      </details>
+
+      <details id="faq-delegated-mint">
+        <summary>I minted through delegation. Can my hot wallet buy in the first hour?</summary>
+        <div class="a">
+          <p>Yes. A delegated mint sends the passes to the hot wallet that did the minting, so that wallet holds them and can buy. The vault wallet that granted the delegation does not hold those passes.</p>
+        </div>
+      </details>
+
+      <details id="faq-launch-limits">
+        <summary>What limits apply during the first hour?</summary>
+        <div class="a">
+          <p>Two, on top of the pass check, and both follow the wallet that signs:</p>
+          <ul>
+            <li><strong>Cooldown.</strong> At least 2 minutes between two buys from the same wallet.</li>
+            <li><strong>Size cap.</strong> Each buy can spend at most a fixed amount of ETH until that wallet has spent 10 times that amount during the hour. After that its buys are uncapped. Only ETH actually spent counts (the tax included), so a string of tiny buys does not use the cap up.</li>
+          </ul>
+          <p>The cap is written into the pool's hook when it is deployed and can never be changed. The swap screen shows the exact figure and how much of your capped budget is left. None of these limits apply to sells.</p>
+        </div>
+      </details>
+
+      <details id="faq-pass-lock">
+        <summary>Can I move my passes after buying in the first hour?</summary>
+        <div class="a">
+          <p>Not until the hour is over. Once a wallet has bought during the hour, no pass can be transferred out of that wallet until the hour ends. Passes can still be sent into it, and wallets that did not buy during the hour can move passes as normal. This stops one pass being passed around to unlock several buying wallets.</p>
+        </div>
+      </details>
+
+      <details id="faq-after-hour">
+        <summary>What changes when the hour ends?</summary>
+        <div class="a">
+          <p>Anyone can buy from any wallet, with no pass, no cooldown and no size cap, and the pass transfer lock switches off. This happens by itself; nobody has to turn it on. The higher sell tax is on its own clock and keeps stepping down for 48 hours (see <a href="#faq-tax">Tax and swaps</a>).</p>
+        </div>
+      </details>
+
+      <details id="faq-wallet-type">
+        <summary>Can I use a smart contract wallet, a Safe, or a gasless or relayed wallet?</summary>
+        <div class="a">
+          <p>Use a normal wallet, where the account you connect is the account that signs and sends the transaction. Packs and leaderboard points are credited to the account that signed the transaction, not to the wallet the tokens come from. With a Safe that is the owner key that executed it. With a gasless or relayed wallet it is the relayer, and packs can never be moved to you afterwards.</p>
+          <p>During the first hour the pass check, the cooldown and the size cap also look at that signing account, so a Safe's passes do not count, and everyone who uses the same relayer shares one cooldown and one cap.</p>
+        </div>
+      </details>
+
+      <h3 class="faq-group" id="faq-tax"><span class="k">02</span>Tax and swaps</h3>
+
+      <details id="faq-tax-rates">
+        <summary>How much tax do buys and sells pay?</summary>
+        <div class="a">
+          <p><strong>Buys pay 4%.</strong> <strong>Sells pay 20%</strong> for the first 12 hours, then 16%, 12% and 8%, one step every 12 hours, and <strong>4% from 48 hours on</strong>. The clock starts when the pool is created, the same moment the first hour starts.</p>
+          <p>The tax is always taken in ETH (as WETH), never in QPULL, and it is the stated percent of the ETH side of the trade, rounded by at most one wei. Plain QPULL transfers between wallets are not taxed; only swaps in the official QPULL/WETH pool are, and only buys in that pool earn packs and points.</p>
+        </div>
+      </details>
+
+      <details id="faq-tax-split">
+        <summary>Where does the tax go?</summary>
+        <div class="a">
+          <p>All of it goes to the Treasury contract. Each time the Treasury converts a batch, <strong>20% goes to team + operations</strong> (kept as WETH) and <strong>80% is turned into $QUOTRON for prizes</strong>: 61.25% of all tax to the daily raffle vault, 12.5% to the weekly leaderboard vault and 6.25% to the weekly holder draw vault. Those percentages are fixed in the contract, and where each share is sent is locked at launch.</p>
+        </div>
+      </details>
+
+      <details id="faq-cancelled">
+        <summary>What happens if the price moves, or my transaction runs short of gas?</summary>
+        <div class="a">
+          <ul>
+            <li><strong>Price moves.</strong> Every swap from this site carries a minimum amount you will receive. If the price moves past it, the whole swap is cancelled and you pay only gas.</li>
+            <li><strong>Slow to confirm.</strong> Every swap from this site also carries a 10 minute deadline. If it is not mined in time, it cancels itself and you pay only gas.</li>
+            <li><strong>Not enough liquidity.</strong> A buy from this site, or any buy that names the exact ETH it spends, is cancelled as a whole if the pool cannot fill it completely, never half filled, and so is a sell made from this site. A buy made in another app that names the exact QPULL it wants to receive has no such check.</li>
+            <li><strong>Too little gas.</strong> A buy that runs out of gas while its packs or points are being recorded is cancelled as a whole, so a low gas limit cannot make you pay the tax and miss your packs. Send it again with more gas. The site already sets a generous gas limit on buys.</li>
+          </ul>
+        </div>
+      </details>
+
+      <details id="faq-exact-out">
+        <summary>Do "exact amount out" swaps pay less tax?</summary>
+        <div class="a">
+          <p>No. Some swap apps let you name the exact amount you want to receive instead of the amount you pay. Those swaps pay the true rate too: an exact output buy pays 4% of all the ETH it spends, and an exact output sell pays the full current sell rate on its gross ETH. The swap on this site always uses the amount you pay.</p>
+        </div>
+      </details>
+
+      <details id="faq-treasury-qpull">
+        <summary>What happens to QPULL sent to the Treasury?</summary>
+        <div class="a">
+          <p>The tax itself arrives as ETH, so the only QPULL the Treasury ever holds is QPULL someone sent to it. When the Treasury converts, it sells that QPULL into the pool in limited slices without paying the trade tax, and the ETH it gets follows the same 20% / 80% split. A small balance waits until it reaches the minimum batch size before it is sold.</p>
+        </div>
+      </details>
+
+      <h3 class="faq-group" id="faq-packs"><span class="k">03</span>Packs and the daily raffle</h3>
+
+      <details id="faq-packs-per-buy">
+        <summary>How many packs does a buy give me?</summary>
+        <div class="a">
+          <p>One pack for every <strong>ticket price</strong> of ETH you spend, the tax included. Whatever is left over is banked and counts toward your next buy. The count depends on the ETH you spend, not on the QPULL you receive, so slippage never changes it.</p>
+          <p>One buy mints at most the <strong>per-buy pack limit</strong>. Value above that is not lost: it stays banked and mints on your later buys. The limit starts at 100 packs and the owner can change it, never above 200. The ticket price is an ETH amount the owner re-pegs to stay near $10, by at most 25% and at most once a day. The swap screen estimates your packs from the live values before you buy.</p>
+        </div>
+      </details>
+
+      <details id="faq-enter">
+        <summary>Do I need to do anything to enter the daily draw?</summary>
+        <div class="a">
+          <p>No. Every pack you buy is entered automatically in each draw it is eligible for. You only act to claim a win, to rip packs that did not win, and to pledge Art Passes for free entries.</p>
+        </div>
+      </details>
+
+      <details id="faq-rarity-odds">
+        <summary>Does a rarer pack have a better chance to win?</summary>
+        <div class="a">
+          <p>No. <strong>Every live pack in a draw has exactly the same chance.</strong> The draw never looks at a pack's rarity. Rarity only decides which prize bucket a winning pack is paid from: Super rare 45% of the day's pot, Rare 25%, Uncommon 20%, Common 10%, each bucket split equally between that day's winners of that rarity. A bucket with no winner that day pays nothing and its share stays in the vault for later pots.</p>
+          <p>Packs reveal as Common 80% of the time, Uncommon 15%, Rare 4% and Super rare 1%, from a Drand beacon that did not exist when you bought, so anyone can recompute every roll.</p>
+        </div>
+      </details>
+
+      <details id="faq-pack-transfer">
+        <summary>Can I transfer or sell a pack?</summary>
+        <div class="a">
+          <p>No. Packs are not tokens. Each pack is recorded to the wallet that made the buy, and there is no function to move it. Its prize claim and its rip XP can only ever go to that wallet.</p>
+        </div>
+      </details>
+
+      <details id="faq-pack-life">
+        <summary>How long does a pack stay in the draw?</summary>
+        <div class="a">
+          <p>Packs bought on a game day are in the draws for the next 7 game days, one draw per day, so a pack gets 7 chances unless it wins first. A pack that wins leaves the draw.</p>
+          <p>Each day's draw can be run during the following game day, by anyone. If it is not run in that time, that day is skipped for good and its pot simply stays in the vault. If the vault is too small to pay a day's pot, that day does not draw yet and no pack is used up.</p>
+        </div>
+      </details>
+
+      <details id="faq-daily-pot">
+        <summary>How big is the daily pot, and how many winners are there?</summary>
+        <div class="a">
+          <p>Each daily draw pays a percentage of the raffle vault's free balance, capped at a maximum pot, to a set number of winners (never more than 200). Those three, and the minimum pot, are owner settings: each change is limited to 25% up or down (a very small value can still rise by one) and to once a day, a change only applies from the next game day, and the percentage can never be more than half the vault. The pot is only ever what the vault actually holds, so no prize amount is guaranteed.</p>
+        </div>
+      </details>
+
+      <details id="faq-opening">
+        <summary>When is the first draw?</summary>
+        <div class="a">
+          <p>There are no draws in the first 2 game days while packs and the prize pot build up. After that, a <strong>one time opening draw</strong> picks 5 winners from the packs bought in those 2 days, and only then do the daily draws begin. Packs from the first 2 days also stay in the daily draws for the rest of their 7 days.</p>
+          <p>If the prize vault is still too small to pay the opening, it waits. From one day later it can be deliberately skipped instead; then nobody is paid by it, no pack is used up, and the money stays in the vault for the daily draws.</p>
+        </div>
+      </details>
+
+      <details id="faq-reveal-wait">
+        <summary>Why would a draw wait?</summary>
+        <div class="a">
+          <p>Every pack's rarity is sealed to a future Drand beacon, and a draw is not allowed to run while any pack in it is still unrevealed. If a reveal beacon has not been posted on chain yet, the draw simply waits, nothing is used up, and it runs once the beacon is posted. Daily draws should never have to wait, because packs reveal shortly after their buying day ends, before their first draw. The opening draw can wait for the last reveals.</p>
+        </div>
+      </details>
+
+      <details id="faq-claim">
+        <summary>How do I collect a prize, and how long do I have?</summary>
+        <div class="a">
+          <p>A win does not pay automatically. It writes a <strong>claim</strong> for the winning wallet, which you collect from the app (one transaction can collect many). Only the winning wallet can collect it, and you have <strong>30 days</strong> from the draw. After that the claim expires, and anyone can return the unclaimed $QUOTRON to its prize vault's pot, where it funds future draws. The same applies to holder draw and leaderboard prizes.</p>
+        </div>
+      </details>
+
+      <h3 class="faq-group" id="faq-rip"><span class="k">04</span>Ripping and the leaderboard</h3>
+
+      <details id="faq-rip-xp">
+        <summary>What does ripping a pack give me?</summary>
+        <div class="a">
+          <p>A pack that finishes its 7 draws without winning can be <strong>ripped</strong> for leaderboard XP. A rip banks <strong>1.8% of the pack's ticket price times its rarity weight</strong>: Common 1, Uncommon 2, Rare 4, Super rare 10, so a Super rare banks 18% of its ticket price. The ticket price used is the lowest one paid for any pack bought on that same game day. Packs that won, and free Art Pass entries, bank no rip XP.</p>
+        </div>
+      </details>
+
+      <details id="faq-rip-window">
+        <summary>When can I rip, and what if I miss it?</summary>
+        <div class="a">
+          <p>Ripping opens once the window for a pack's last draw has closed, and stays open for 7 game days. If you do not rip in that window, that pack's XP is gone. Ripping is always your choice; nothing rips on its own, and only the wallet that owns the pack can rip it.</p>
+          <p>Packs bought in the first 2 game days can be ripped only after the one time opening draw has run or been skipped. If that has still not happened when their rip window closes, those packs bank no XP. They never lose a prize because of this.</p>
+        </div>
+      </details>
+
+      <details id="faq-leaderboard-pay">
+        <summary>How does the weekly leaderboard pay?</summary>
+        <div class="a">
+          <p>Your points for a week are the ETH you spent on buys that week (the tax included) plus the rip XP you banked that week. Selling never adds or removes points.</p>
+          <p>The <strong>25 wallets with the most points</strong> are on the board. Each of them is paid the week's pot times its points, divided by <strong>all points earned that week by every wallet</strong>, on the board or not. The share belonging to wallets that are not on the board is not handed to the board: it stays in the vault for later weeks. So splitting the same buying across several wallets earns nothing extra. A wallet only joins a full board by beating the lowest score on it.</p>
+        </div>
+      </details>
+
+      <details id="faq-leaderboard-week">
+        <summary>How big is the weekly pot, and when is a week settled?</summary>
+        <div class="a">
+          <p>A week pays the smaller of the leaderboard vault's free balance and the week's pot cap, which the owner can move by at most 25% once a week, taking effect from the next week. Anything above the cap stays for later weeks.</p>
+          <p>Leaderboard weeks run from Sunday 00:00 UTC to the next Sunday 00:00 UTC. A week is settled during the following week, by anyone, normally right after it ends. If it is not settled within that following week it is skipped, and its pot stays in the vault. A pot below the minimum payout waits for more funding within that week rather than paying out dust. Prizes are claims with the same 30 day window.</p>
+        </div>
+      </details>
+
+      <h3 class="faq-group" id="faq-holder"><span class="k">05</span>Holder draw and Art Passes</h3>
+
+      <details id="faq-holder-who">
+        <summary>Who can win the weekly holder draw?</summary>
+        <div class="a">
+          <p>Wallets holding <strong>4 or more Art Passes</strong>. Nothing to opt into. Each week the draw picks <strong>5 different passes</strong> at random from all minted passes and pays the owner of each one fifth of the pot, so more passes means more chances, and one wallet can win several of the five shares.</p>
+          <p>A picked pass only counts if its owner has held 4 or more passes without a break since before that week ended, still does when the draw runs, and has held that exact pass since before the week ended too. Otherwise the pick is skipped and re-rolled to another pass. The check happens when the draw runs, not when the week ends, so selling below 4 before the draw loses that week.</p>
+          <p>The owner can also exclude specific addresses from winning (it is meant for protocol and escrow wallets). An exclusion, or lifting one, only applies from the following week, so it can never change a week that has already ended.</p>
+        </div>
+      </details>
+
+      <details id="faq-holder-when">
+        <summary>When does the holder draw run?</summary>
+        <div class="a">
+          <p>Holder weeks are 7 day periods on the game clock (not the leaderboard's Sunday weeks). A week is drawn during the following week, once its random beacon is published about 4.5 days after the week ends; anyone can run it. The pot is the smaller of the holder vault's free balance and its pot cap, which has a hard ceiling fixed at deploy. If a week is not drawn by the end of the following week, it is skipped and the pot stays in the vault. Winners collect within 30 days.</p>
+        </div>
+      </details>
+
+      <details id="faq-holder-transfer">
+        <summary>What happens if I move a pass?</summary>
+        <div class="a">
+          <p>A pass that changes wallets after a week has ended cannot win that week, for the sender or the receiver; if it is picked, the pick is re-rolled. If a transfer takes your wallet below 4 passes, your wallet stops qualifying at once, including for a week that has ended but has not been drawn yet, and once it is back at 4 or more it qualifies again only for weeks that end after that moment. Buying passes after a week has ended never helps for that week.</p>
+        </div>
+      </details>
+
+      <details id="faq-free-entries">
+        <summary>Do Art Passes get free entries in the daily raffle?</summary>
+        <div class="a">
+          <p>Yes, once the daily draws have started (the opening draw is packs only).</p>
+          <ul>
+            <li><strong>Super rare</strong> passes enter every daily draw automatically, with weight 8, after a one time registration that anyone can do, you included, from the app.</li>
+            <li><strong>Common, Uncommon and Rare</strong> passes enter only on game days you <strong>pledge</strong> them in the app, with weight 1, 2 or 4. A pledge covers that game day's draw only.</li>
+          </ul>
+          <p>All free entries together are limited to 10% of the paid packs in that day's draw, however many passes enter. That share is a slice of the paid draw, not a pool of its own, so it moves with how many packs were bought: <strong>a day whose draw holds fewer than 10 paid packs has no free entries at all</strong>, because ten percent of nine rounds down to nothing. Pledging more passes never enlarges the share, it only divides the same slice among more passes. A pass only counts if its current owner held it before that game day ended. A free win is paid from a freshly rolled prize bucket, not from the pass's own rarity, and banks no rip XP.</p>
+        </div>
+      </details>
+
+      <details id="faq-pledge-move">
+        <summary>What if I move a pledged pass?</summary>
+        <div class="a">
+          <p>Its pledge stops counting. A pledge belongs to the wallet that made it, so after a transfer the pass is skipped in that day's draw unless its new owner pledges it again, and even then it counts only if the new owner held it before that game day ended. Moving a Super rare after a game day has ended gives up that pass's free seats in that day's draw.</p>
+        </div>
+      </details>
+
+      <h3 class="faq-group" id="faq-safety"><span class="k">06</span>Safety and trust</h3>
+
+      <details id="faq-liquidity">
+        <summary>Can the liquidity be pulled?</summary>
+        <div class="a">
+          <p>No. The launch liquidity is added once, by a lock contract that has no function to remove it, withdraw it or collect its fees, and the pool itself refuses every liquidity removal from anyone. The entire QPULL supply is sent to that lock and paired into the pool at launch: there is no presale, no team token allocation and no tokens held back.</p>
+        </div>
+      </details>
+
+      <details id="faq-custody">
+        <summary>Who holds the prize money?</summary>
+        <div class="a">
+          <p>Contracts, not people. The trade tax sits in the Treasury contract until it is converted, and prizes sit as $QUOTRON in three prize vault contracts. A prize vault has no withdrawal function for anyone: $QUOTRON leaves a vault only when a winner collects a prize written for them. Prizes are always paid in $QUOTRON.</p>
+          <p>The team does run the keeper that converts the tax, and sets the size and slippage limits for those conversions. Once routing is locked at launch it cannot change where the money goes or the split.</p>
+        </div>
+      </details>
+
+      <details id="faq-verify">
+        <summary>How do I check what I am signing?</summary>
+        <div class="a">
+          <p>Every contract address is published in <a href="#contracts">Contracts</a>. Before you sign a mint, delegation, swap, approval, claim, rip, pledge or pass registration, the app shows the contract it is about to call, with a link to the block explorer, so you can compare it with the published address. A delegation is a transaction to the delegate.xyz registry, not to QuoPull, and that registry's address is listed in <a href="#contracts">Contracts</a> too. QuoPull never asks for your seed phrase, and never asks for an unlimited token approval.</p>
+        </div>
+      </details>
+    </section>
+
+    <!-- MINT -->
+    <section class="doc-sec" id="mint">
+      <span class="sec-eyebrow">02 / The mint</span>
+      <h2>Art Passes</h2>
+      <p>The Art Pass is a fixed supply ERC721 (<code>MAX_SUPPLY</code> = 3,500) sold for <strong>0.0075 ETH per pass</strong> in a tiered, time boxed sale that the team starts with one action and that then closes itself on the clock. Every mint pays the exact price and is split on the spot; you receive a plain sealed pass whose rarity nobody knows yet.</p>
+
+      <div class="tblwrap">
+      <table class="spec">
+        <caption>Mint windows (mainnet clock)</caption>
+        <thead><tr><th>Window</th><th>Who can mint</th><th>Per wallet cap</th><th class="num">Duration</th></tr></thead>
+        <tbody>
+          <tr><td>GTD</td><td>Allowlist only (proof)</td><td>3 (guaranteed)</td><td class="num">6 h</td></tr>
+          <tr><td>Overflow</td><td>Allowlist only (proof)</td><td>8 cumulative</td><td class="num">18 h</td></tr>
+          <tr><td>Public</td><td>Everyone (open + proof)</td><td>20 cumulative</td><td class="num">24 h</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p>The cap is <strong>cumulative</strong> and rises over time: one wallet can take 3 in GTD, top up to 8 in overflow, then to 20 in public. There is one counter per wallet across every window. Payment must be exact (<code>price &times; quantity</code>) and each mint splits into <strong>80% liquidity / 10% prize seed / 10% team + operations</strong>, held in onchain buckets and withdrawn later in a separate permissionless step. Withdrawal pays each bucket to an address the team set before the mint started. Those are team controlled wallets, not locked contracts: the liquidity bucket goes to the deploy key, and the launch script refuses to seed the pool unless it adds that whole bucket (plus any declared top up) to the permanent lock.</p>
+
+      <h3>Starting and closing</h3>
+      <p>The team calls <code>openAllowlistMint()</code> once. That single stamp starts the clock; there is no second start action and it can never be rewound or reopened. The total sale is a fixed ~48 hours. If demand is heavy in the last minutes of overflow, an <strong>auction soft close</strong> nudges the overflow window later (up to +6 h) so late allowlisters are not cut off.</p>
+
+      <div class="note">
+        <span class="h">Two things people get wrong</span>
+        <p><strong>The cap is cumulative, not additive.</strong> It is one counter per wallet that rises 3 &rarr; 8 &rarr; 20, so the most any wallet can ever mint is 20, not 3 + 8 + 20. And <strong>the soft close does not extend the sale</strong>: the final close is fixed at start + 48 h, so a late overflow surge shortens the public window rather than pushing the end out.</p>
+      </div>
+
+      <h3>Rarity and reveal</h3>
+      <p>Rarity is not chosen at mint. After the sale, <code>finalizeLaunch()</code> seals the whole collection to one future Drand round, at least an hour ahead. Once Drand publishes that round and its beacon is posted on chain (the team posts it as soon as it is out, and anyone can), every pass reveals its tier at the same instant and the onchain art flips from sealed to tier art. If the team ever vanished, a 30 day backstop lets anyone finalize.</p>
+
+      <div class="tblwrap">
+      <table class="spec">
+        <caption>Rarity tiers</caption>
+        <thead><tr><th>Tier</th><th class="num">Odds</th><th class="num">Entry weight</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill c">Common</span></td><td class="num">70%</td><td class="num">1&times;</td></tr>
+          <tr><td><span class="pill u">Uncommon</span></td><td class="num">20%</td><td class="num">2&times;</td></tr>
+          <tr><td><span class="pill r">Rare</span></td><td class="num">8%</td><td class="num">4&times;</td></tr>
+          <tr><td><span class="pill s">Super rare</span></td><td class="num">2%</td><td class="num">8&times;</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>Each pass rolls independently, so tier counts are approximate, not fixed quotas. A pass's rarity sets its <strong>entry weight</strong> in the daily raffle, that is how many draw seats it competes for, not a fixed share of any prize. When a pass wins, the amount it pays is a separate roll over the raffle prize buckets described below.</p>
+    </section>
+
+    <!-- ALLOWLIST -->
+    <section class="doc-sec" id="allowlist">
+      <span class="sec-eyebrow">03 / The mint</span>
+      <h2>Allowlist &amp; delegation</h2>
+      <p>The GTD and overflow windows are gated to a community allowlist. Eligibility is a merkle root set on the contract; each wallet proves membership with a merkle proof (leaf = <code>keccak256(abi.encodePacked(wallet))</code>, verified with OpenZeppelin MerkleProof). The root is frozen the instant the mint starts, so the allowlist must be final before launch.</p>
+
+      <h3>Who is eligible</h3>
+      <p>The allowlist is snapshotted from real holders of partner communities and built offchain into the root plus a public proofs file the site serves. The current baseline:</p>
+      <div class="tblwrap">
+      <table class="spec">
+        <caption>Allowlist (5 communities plus 2 team additions)</caption>
+        <thead><tr><th>Community</th><th>Rule</th><th class="num">Wallets</th></tr></thead>
+        <tbody>
+          <tr><td>QUOTRONS</td><td>All holders</td><td class="num">932</td></tr>
+          <tr><td>StonkBrokers</td><td>Top 50 + ties</td><td class="num">51</td></tr>
+          <tr><td>identity.md</td><td>Top 50 + ties</td><td class="num">51</td></tr>
+          <tr><td>Gloombles mythics</td><td>Full list</td><td class="num">94</td></tr>
+          <tr><td>Cncptl Prspctv</td><td>All members</td><td class="num">101</td></tr>
+          <tr><td>Added by the team</td><td>Hand additions</td><td class="num">5</td></tr>
+          <tr><td>Combined (deduped)</td><td></td><td class="num">1,213</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="note">
+        <span class="h">Snapshots drift</span>
+        <p>A merkle allowlist is a photograph at one block, not a live feed. A wallet that sells after the snapshot stays eligible; a wallet that buys in after is not. To shrink that gap, all five lists were refreshed on 16 September 2026, the day before delegation opens: the three onchain snapshots (QUOTRONS, StonkBrokers, identity.md) were read again, and the Gloombles mythics and Cncptl Prspctv lists are fresh exports. There is no live cross chain balance check, because the sources span Robinhood Chain, Ethereum, and offchain lists.</p>
+      </div>
+
+      <h3>Delegated minting (keep your cold wallet cold)</h3>
+      <p>An eligible wallet does not have to connect to mint. Using the delegate.xyz v2 registry, a valuable "vault" wallet <strong>A</strong> delegates a fresh hot wallet <strong>B</strong>, scoped to the Art Pass contract, in one transaction that goes to the registry (not to QuoPull, no token approval, nothing moves). Then <strong>B</strong> calls <code>delegatedAllowlistMint(qty, proof, A)</code>: the contract checks A's merkle proof and asks the registry whether B is delegated by A. The passes mint to B and the ETH is paid by B, but the <strong>cap is keyed to the vault A</strong>, so several hot wallets of one vault share A's single allocation and can never multiply it.</p>
+      <p>That flow, with an eligibility checker and a scoped by default delegate button, ran on the <a href="/mint">Art Pass page</a> while the mint was open. The mint is closed and the art is revealed, so the section above is a record of how it worked rather than something you can still do.</p>
+    </section>
+
+    <!-- RESERVE -->
+    <section class="doc-sec" id="reserve">
+      <span class="sec-eyebrow">04 / The mint</span>
+      <h2>Treasury reserve</h2>
+      <p>Before the mint opens, the team may take a one time treasury reserve: <code>reserveMint(qty, to)</code> mints up to <strong>25 passes</strong> (ids 1..N) to the treasury, free of charge and skipping the per wallet cap, but counting against the 3,500 supply (so at most 3,475 are left to sell). It is one shot and can only run before the mint starts, so the reserved passes are always the very first ids.</p>
+      <div class="note tip">
+        <span class="h">The reserve plays the games</span>
+        <p>By design the reserved passes are full participants: all super rares are registered and they enter the daily raffle like any other pass (excluding them would distort the raffle odds for everyone else), and they are eligible for the weekly holder draw. Any winnings simply recycle to the treasury.</p>
+      </div>
+    </section>
+
+    <!-- RAFFLE -->
+    <section class="doc-sec" id="raffle">
+      <span class="sec-eyebrow">05 / The games</span>
+      <h2><span class="gtag raffle">Daily</span> &nbsp;Raffle</h2>
+      <p>Buying the token is how you get raffle tickets. Every buy mints whole "packs," one per ticket price of ETH you spend (the owner re-pegs it to stay near $10), up to a per-buy limit that starts at 100 and can never exceed 200, with leftover value banked toward your next buy. Ticket price is based on the ETH going in, not the QPULL you receive, so slippage never changes what you earn. Each pack is sealed to a future Drand round; when it publishes (about an hour after the day closes) the pack reveals a rarity and anyone can verify the roll.</p>
+
+      <div class="tblwrap">
+      <table class="spec">
+        <caption>Pack reveal odds vs prize buckets</caption>
+        <thead><tr><th>Tier</th><th class="num">Pack odds</th><th class="num">Prize bucket</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill c">Common</span></td><td class="num">80%</td><td class="num">10%</td></tr>
+          <tr><td><span class="pill u">Uncommon</span></td><td class="num">15%</td><td class="num">20%</td></tr>
+          <tr><td><span class="pill r">Rare</span></td><td class="num">4%</td><td class="num">25%</td></tr>
+          <tr><td><span class="pill s">Super rare</span></td><td class="num">1%</td><td class="num">45%</td></tr>
+        </tbody>
+      </table>
+      </div>
+
+      <p><strong>Every live pack has the same chance of being drawn.</strong> The draw never reads a pack's tier; the tier only decides which prize bucket a winning pack is paid from. Rarer packs are not more likely to win.</p>
+
+      <p>Once a day the raffle takes a share of the prize vault as the pot, splits it into those tier buckets, and draws a set number of winners (never more than 200). Winners in a tier split that bucket equally. <strong>A tier with no winner is not paid: its slice stays in the vault and grows later pots.</strong> A pack stays in the running for 7 days (7 shots), and a day is drawable only on the following day, or it voids and its funds roll forward. Launch has a 2 day warm up, then a one time opening draw of 5 winners.</p>
+
+      <h3>Art Passes enter for free</h3>
+      <p>If you hold an Art Pass you enter the daily raffle without buying: a super rare pass is auto entered (weight 8) and Common/Uncommon/Rare passes opt in each day by "pledging" (weights 1/2/4). The whole free block is capped at 10% of that day's paid field, and a pass only counts if you held it before the day's cutoff, so nobody can snipe entries once the winning seed is knowable.</p>
+
+      <h3>Claiming and ripping</h3>
+      <p>Winning does not auto pay: the raffle writes you a claim and you have 30 days to <code>claim</code> your $QUOTRON (unclaimed rolls back into future pots). Packs that reveal as non winners and finish their 7 day run can be <strong>ripped</strong> within a one week window to bank rarity weighted XP into the leaderboard. A rip banks 1.8% of the lowest ticket price paid on the day the pack was bought, times its rarity weight (Common 1x, Uncommon 2x, Rare 4x, Super rare 10x), in the same points the leaderboard counts for buys. Winners never bank rip XP.</p>
+      <p>Packs bought in the first two days are the candidates for the one time opening draw, so they cannot be ripped until that draw has run. If the opening draw has not run by the time their one week rip window closes, those packs bank no rip XP; they never lose a prize to this rule.</p>
+    </section>
+
+    <!-- HOLDER -->
+    <section class="doc-sec" id="holder">
+      <span class="sec-eyebrow">06 / The games</span>
+      <h2><span class="gtag holder">Weekly</span> &nbsp;Holder draw</h2>
+      <p>The holder draw is a weekly jackpot for pass holders, funded by 6.25% of the trade tax. Once a week it picks <strong>5 distinct winning passes</strong> at random from the whole minted range and pays each winner an equal one fifth of the pot in $QUOTRON. Because it picks passes, not wallets, holding more eligible passes gives you proportionally more chances, and one wallet can win several of the five shares.</p>
+      <ul>
+        <li><strong>You must hold 4+ passes</strong> (<code>MIN_HOLD</code>) without a break from before the week's freeze instant (the moment the week ends) <strong>until that week's draw runs</strong>. The draw runs during the following week, once the week's random beacon is public, about 4.5 to 7 days after the week ends, and it checks your wallet again at that moment: dropping below 4 at any point before then loses that week, and buying back does not restore it. Topping up after the week ends buys you nothing for that week. Note the gap against the mint caps: the guaranteed allowlist allocation is <strong>3 passes</strong>, one below this threshold, so a wallet that mints only its guaranteed amount does not qualify for the holder draw until it reaches 4. The launch window access and the free daily raffle entries are unaffected and work from your first pass.</li>
+        <li><strong>Move a pass after the freeze and it cannot win that week</strong>, for neither the seller nor the buyer; the slot rerolls to a third party. This is the deliberate cost of having no gas heavy snapshot: eligibility reads the NFT's ownership stamps in O(1) when the draw runs, so there is no stored list of eligible holders to be locked into.</li>
+        <li>Winners have 30 days to claim; unclaimed or unfilled shares roll forward. A week not drawn in the following week voids and rolls forward.</li>
+        <li><strong>The owner can exclude addresses</strong> (<code>setExcluded</code>, meant for protocol and escrow wallets): a pass owned by an excluded address is re-rolled like any other ineligible pick. Excluding or un-excluding an address only takes effect from the following week, never for a week that has already ended.</li>
+      </ul>
+    </section>
+
+    <!-- LEADERBOARD -->
+    <section class="doc-sec" id="leaderboard">
+      <span class="sec-eyebrow">07 / The games</span>
+      <h2><span class="gtag lead">Weekly</span> &nbsp;Leaderboard</h2>
+      <p>The leaderboard is a weekly activity race funded by 12.5% of the trade tax. You earn XP two ways: by buying $QPULL (points equal to the ETH value of your buy) and by ripping non winning packs (1.8% of the lowest ticket price on the day the pack was bought, times Common 1x, Uncommon 2x, Rare 4x, Super rare 10x). The 25 wallets on the weekly board are paid; a week pays at most the vault's free balance or the week's pot cap, whichever is smaller, and anything above the cap rolls forward.</p>
+      <p>Your cut is <strong>pro rata by your share of all points earned that week</strong>, not just the top 25's, so a whale earns proportionally but can never corner the whole pot, and splitting your activity across wallets gains you nothing. Weeks run from Sunday 00:00 UTC to the next Sunday, and each week is settled during the following week, normally right after it ends. Selling never earns points, only buys and rips do.</p>
+    </section>
+
+    <!-- TOKENS -->
+    <section class="doc-sec" id="tokens">
+      <span class="sec-eyebrow">08 / Tokens &amp; market</span>
+      <h2>$QPULL &amp; $QUOTRON</h2>
+      <p>QuoPull uses two tokens with different jobs.</p>
+      <div class="tblwrap">
+      <table class="spec">
+        <thead><tr><th></th><th>$QPULL</th><th>$QUOTRON</th></tr></thead>
+        <tbody>
+          <tr><td>Role</td><td>The token you trade</td><td>The token you win</td></tr>
+          <tr><td>Supply</td><td>1,000,000,000 fixed</td><td>Prize inventory bought with tax</td></tr>
+          <tr><td>Where it goes</td><td>100% paired into the locked pool</td><td>Into the 3 prize vaults, out to winners</td></tr>
+          <tr><td>Controls</td><td>Ownerless: no mint, burn, pause, or blocklist</td><td>Held and routed by the Treasury</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>The 4% trade tax deliberately lives in the pool's hook, not in the QPULL token. A transfer tax token breaks Uniswap v4's settlement accounting, so plain transfers (wallets, vaults, claims) stay untaxed and only swaps in the canonical pool are taxed.</p>
+    </section>
+
+    <!-- LIQUIDITY -->
+    <section class="doc-sec" id="liquidity">
+      <span class="sec-eyebrow">09 / Tokens &amp; market</span>
+      <h2>Liquidity &amp; tax</h2>
+      <h3>The locked pool</h3>
+      <p>All liquidity lives in one canonical QPULL/WETH Uniswap v4 pool. Its launch position is added exactly once into <code>QpullLiquidityLock</code>, which contains no remove, withdraw, collect, sweep, owner, or setter path of any kind. <strong>The guarantee is the absence of code, not a permission gate:</strong> removal is not restricted, it does not exist. The pool's own 0.30% LP fee accrues to the locked position and is never collected.</p>
+
+      <h3>The trade tax</h3>
+      <p>The hook takes a tax inside every swap on the canonical pool and sends it to the Treasury. Buys are a flat 4%. Sells decay from 20% down to 4% over the first 48 hours (stepping 4 points every 12 hours) as an anti dump measure.</p>
+      <p>The tax is always taken in <strong>ETH</strong> (as WETH), never in QPULL, and it is exactly the stated percent of the ETH side of the trade. That holds for every kind of swap, including exact output trades: an exact output sell pays the true 20/16/12/8/4% of its gross ETH, not a smaller effective rate.</p>
+      <div class="tblwrap">
+      <table class="spec">
+        <caption>Where the 4% tax goes (after conversion)</caption>
+        <thead><tr><th>Slice</th><th>Destination</th><th class="num">Share of tax</th></tr></thead>
+        <tbody>
+          <tr><td>Team + operations</td><td>Team pay plus operations: the keeper bots, Drand transactions, RPC and API, and hosting. Kept as WETH.</td><td class="num">20%</td></tr>
+          <tr><td>Daily raffle</td><td>Raffle vault</td><td class="num">61.25%</td></tr>
+          <tr><td>Leaderboard</td><td>Leaderboard vault</td><td class="num">12.5%</td></tr>
+          <tr><td>Holder draw</td><td>Holder vault</td><td class="num">6.25%</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>A keeper periodically calls <code>convert()</code>: the tax already arrives as WETH (only QPULL donated to the Treasury needs swapping to WETH first), and it sends 20% to team + operations (the keeper bots, Drand transactions, RPC and API, hosting, the running stack), turns the 80% into $QUOTRON, and splits it into the three prize vaults. Conversion is keeper only, capped per call and floored against a slippage quote, which limits but does not rule out sandwiching, and a stuck vault send is retried only to that same vault, never redistributed.</p>
+    </section>
+
+    <!-- TRADING -->
+    <section class="doc-sec" id="trading">
+      <span class="sec-eyebrow">10 / Tokens &amp; market</span>
+      <h2>Launch protections</h2>
+      <p>For the first window after the pool opens, the hook applies anti sniper rules, all keyed to the account that signs the transaction (see <a href="#faq-wallet-type">which wallet counts</a>):</p>
+      <ul>
+        <li><strong>Holder gate:</strong> for the first hour, only wallets holding an Art Pass can buy, and the pass must be in the wallet that signs the buy (see the <a href="#faq-first-hour">FAQ</a>).</li>
+        <li><strong>Cooldown:</strong> at least 2 minutes between one wallet's buys.</li>
+        <li><strong>Size cap:</strong> each buy is capped at a fixed amount of ETH, written into the hook at deploy, until the wallet has spent 10 times that amount in the launch window; after that, its buys are uncapped. Small buys do not use the cap up, only spend does. The swap screen shows the exact figure.</li>
+        <li><strong>Transfer lock:</strong> while the gate window is open, a wallet that made a launch buy cannot transfer its pass, so one NFT cannot be passed around to unlock many buying wallets.</li>
+        <li><strong>Pool control:</strong> the hook lets only the protocol's liquidity lock create the canonical pool and add liquidity to it, once, at launch, and it refuses every liquidity removal from anyone, the protocol included. That closes the untaxed LP side door (an outsider seeding off spot and withdrawing at 0%). The lock itself also has no function to remove the launch liquidity (see <a href="#liquidity">Liquidity &amp; tax</a>).</li>
+      </ul>
+      <p>After 1 hour the holder gate, the cooldown, the size cap, and the transfer lock switch off automatically. Two protections are not time limited: the pool control (only the protocol's lock adds liquidity, once, and nobody, the protocol included, can remove it) is permanent, and the elevated sell tax keeps stepping down toward the 4% floor across the first 48 hours (see <a href="#liquidity">Liquidity &amp; tax</a>).</p>
+    </section>
+
+    <!-- CONTRACTS -->
+    <section class="doc-sec" id="contracts">
+      <span class="sec-eyebrow">11 / Reference</span>
+      <h2>Contracts</h2>
+      <p>Every QuoPull contract is live on Robinhood Chain and listed below, each linking to the block explorer. Source is verified on Sourcify. Delegations are written to the delegate.xyz v2 registry, an external contract that is not part of QuoPull, at <code>0x00000000000000447e69651d841bD8D104Bed493</code>.</p>
+      <div class="tblwrap">
+      <table class="spec">
+        <thead><tr><th>Contract</th><th>Responsibility</th></tr></thead>
+        <tbody>
+          <tr><td>NFTCollection</td><td>The Art Pass ERC721: tiered mint, reserve, allowlist + delegated mint, onchain rarity reveal.<br><a href="https://robinhoodchain.blockscout.com/address/0xE423E4565EC9196f5B3e1319Aa7175a82A00D858" target="_blank" rel="noopener noreferrer"><code>0xE423E4565EC9196f5B3e1319Aa7175a82A00D858</code></a></td></tr>
+          <tr><td>PassArtRenderer</td><td>Fully onchain SVG art and metadata via SSTORE2; sealed and per tier images.<br><a href="https://robinhoodchain.blockscout.com/address/0x9120aFC176d7c1C203E8B436dF7618F462975dCa" target="_blank" rel="noopener noreferrer"><code>0x9120aFC176d7c1C203E8B436dF7618F462975dCa</code></a></td></tr>
+          <tr><td>QPULLToken</td><td>The ownerless fixed supply ERC20 that fills the liquidity pool.<br><a href="https://robinhoodchain.blockscout.com/address/0x648bf8a42d4546fdb9c840cb6ed78379e80bb0dd" target="_blank" rel="noopener"><code>0x648bf8a42d4546fdb9c840cb6ed78379e80bb0dd</code></a></td></tr>
+          <tr><td>QpullTaxHook</td><td>Uniswap v4 hook: the 4% trade tax, launch gate, throttle, and pool control.<br><a href="https://robinhoodchain.blockscout.com/address/0x3536e961b166254e678ddF9f602cbc94D9009Acc" target="_blank" rel="noopener"><code>0x3536e961b166254e678ddF9f602cbc94D9009Acc</code></a></td></tr>
+          <tr><td>QpullLiquidityLock</td><td>Holds the launch LP position permanently, with no removal path in bytecode.<br><a href="https://robinhoodchain.blockscout.com/address/0x44b61a265b4097460326e2b6f54575aa3f36c668" target="_blank" rel="noopener"><code>0x44b61a265b4097460326e2b6f54575aa3f36c668</code></a></td></tr>
+          <tr><td>QpullSwapRouter</td><td>The site's buy and sell: swaps ETH and $QPULL in the one pool, taxed like any other swap, with a minimum output and a deadline. It has no owner and keeps no user funds between swaps.<br><a href="https://robinhoodchain.blockscout.com/address/0xdc22999a6d351a1a352244c981297ef98fbd5e03" target="_blank" rel="noopener"><code>0xdc22999a6d351a1a352244c981297ef98fbd5e03</code></a></td></tr>
+          <tr><td>Treasury</td><td>Converts tax to $QUOTRON and splits it to the three prize vaults.<br><a href="https://robinhoodchain.blockscout.com/address/0x920f5eb39614ce49a7fad4115f2073819c0e49e8" target="_blank" rel="noopener"><code>0x920f5eb39614ce49a7fad4115f2073819c0e49e8</code></a></td></tr>
+          <tr><td>PackRegistry</td><td>Packs, pledges, super rare entries, and rip XP for the daily raffle.<br><a href="https://robinhoodchain.blockscout.com/address/0x6f43970503692b8cc01ed555ab0495c04abb5bd8" target="_blank" rel="noopener"><code>0x6f43970503692b8cc01ed555ab0495c04abb5bd8</code></a></td></tr>
+          <tr><td>RaffleEngine</td><td>Runs the daily draw and writes winner claims.<br><a href="https://robinhoodchain.blockscout.com/address/0xd0845c29d63553c34ed65e6fac2b92bfaef5fcb3" target="_blank" rel="noopener"><code>0xd0845c29d63553c34ed65e6fac2b92bfaef5fcb3</code></a></td></tr>
+          <tr><td>HolderDrawEngine</td><td>The weekly 5 winner holder jackpot over eligible passes.<br><a href="https://robinhoodchain.blockscout.com/address/0xfadda86ec16cec391ee5519e7d14d51dc5a5bc60" target="_blank" rel="noopener"><code>0xfadda86ec16cec391ee5519e7d14d51dc5a5bc60</code></a></td></tr>
+          <tr><td>LeaderboardEngine / Registry</td><td>Weekly top 25 pro rata activity payout and the points ledger.<br><a href="https://robinhoodchain.blockscout.com/address/0xbc2ae4e263b565b6b3e6449fcdd9a45f53c31673" target="_blank" rel="noopener"><code>0xbc2ae4e263b565b6b3e6449fcdd9a45f53c31673</code></a><br><a href="https://robinhoodchain.blockscout.com/address/0x1953810e50145ea88ffe3ee734f662aebf5780ec" target="_blank" rel="noopener"><code>0x1953810e50145ea88ffe3ee734f662aebf5780ec</code></a></td></tr>
+          <tr><td>ClaimManager</td><td>Pull payment claims for every game, one vault bound per engine.<br><a href="https://robinhoodchain.blockscout.com/address/0xc5f3098b2fd814ae7534b156b3bdba2d7fe978ec" target="_blank" rel="noopener"><code>0xc5f3098b2fd814ae7534b156b3bdba2d7fe978ec</code></a></td></tr>
+          <tr><td>PrizeVault</td><td>Holds the daily raffle pot in $QUOTRON. Only the ClaimManager can move it.<br><a href="https://robinhoodchain.blockscout.com/address/0x41E3ff80643324d73094457DB8Ab84e3c03814BC" target="_blank" rel="noopener"><code>0x41E3ff80643324d73094457DB8Ab84e3c03814BC</code></a></td></tr>
+          <tr><td>LeaderboardVault</td><td>Holds the weekly leaderboard pot. Only the ClaimManager can move it.<br><a href="https://robinhoodchain.blockscout.com/address/0x0199E675290b718fAA40F6023dA84001374346EF" target="_blank" rel="noopener"><code>0x0199E675290b718fAA40F6023dA84001374346EF</code></a></td></tr>
+          <tr><td>HolderVault</td><td>Holds the weekly holder draw pot. Only the ClaimManager can move it.<br><a href="https://robinhoodchain.blockscout.com/address/0xb986d75E9cc2A91DCa4c2A67c614814498641A6D" target="_blank" rel="noopener"><code>0xb986d75E9cc2A91DCa4c2A67c614814498641A6D</code></a></td></tr>
+          <tr><td>QpullWethAdapter</td><td>Swaps donated $QPULL to WETH for the Treasury, through the one pool.<br><a href="https://robinhoodchain.blockscout.com/address/0x4EAa09ecD37FCd27301d74e10032b25271A04787" target="_blank" rel="noopener"><code>0x4EAa09ecD37FCd27301d74e10032b25271A04787</code></a></td></tr>
+          <tr><td>QuotronRouterAdapter</td><td>Buys $QUOTRON with WETH through Quotron's canonical router.<br><a href="https://robinhoodchain.blockscout.com/address/0x3992181C787ca159A26Af47ade183Fca301D2c18" target="_blank" rel="noopener"><code>0x3992181C787ca159A26Af47ade183Fca301D2c18</code></a></td></tr>
+          <tr><td>BlsDrandOracle</td><td>Verifies Drand BLS beacons onchain.<br><a href="https://robinhoodchain.blockscout.com/address/0x9056699c00c414dAFA256CcDe8ee1756EcD23A0E" target="_blank" rel="noopener noreferrer"><code>0x9056699c00c414dAFA256CcDe8ee1756EcD23A0E</code></a></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </section>
+
+    <!-- LAUNCH ORDER -->
+    <section class="doc-sec" id="launch">
+      <span class="sec-eyebrow">12 / Reference</span>
+      <h2>Launch order</h2>
+      <p>The sequence from mint to a live, tradeable market. Each step follows the one before it.</p>
+      <ol class="launch-order">
+        <li><span class="lo-n">1</span><div class="lo-b"><b>NFT sale</b><span class="lo-d">The tiered Art Pass mint opens and runs its window. This is the raise that funds the launch liquidity.</span></div></li>
+        <li><span class="lo-n">2</span><div class="lo-b"><b>NFT reveal</b><span class="lo-d">Once the sale is finalized and the Drand round it was sealed to (at least an hour later) is posted on chain, every pass reveals its tier at once, and the onchain art flips from sealed to tier art.</span></div></li>
+        <li><span class="lo-n">3</span><div class="lo-b"><b>Token launch and pool</b><span class="lo-d">The canonical QPULL/WETH pool is created and seeded, the liquidity is locked, and trading opens with the hook live. The first hour is a holders only window (Art Pass holders buy first, with a size cap and cooldown, and a wallet that buys cannot transfer its pass), then the pool opens to everyone.</span></div></li>
+        <li><span class="lo-n">4</span><div class="lo-b"><b>DexScreener</b><span class="lo-d">The pool goes live on DexScreener, so price, liquidity, and volume are trackable in real time.</span></div></li>
+        <li><span class="lo-n">5</span><div class="lo-b"><b>Games backend goes live</b><span class="lo-d">The prize engine comes online and the trade tax starts funding the game vaults. The daily raffle takes its first draw after a 48 hour warmup, then runs daily; the holder draw and leaderboard settle weekly.</span></div></li>
+      </ol>
+    </section>
+
+    <footer>
+      QuoPull protocol documentation. Figures are drawn from the deployed contracts, where the Art Pass supply, mint price and wallet caps are fixed. Liquidity amounts are set when the token launches. This page describes mechanics, it is not financial advice.
+    </footer>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var root=document.documentElement;
+  try{var st=localStorage.getItem('quopull-theme'); if(st) root.setAttribute('data-theme',st);}catch(e){}
+  var tb=document.getElementById('theme');
+  if(tb) tb.addEventListener('click',function(){
+    var next=root.getAttribute('data-theme')==='dark'?'light':'dark';
+    root.setAttribute('data-theme',next);
+    try{localStorage.setItem('quopull-theme',next);}catch(e){}
+  });
+
+  // mobile hamburger: toggle the Delegate/Docs nav drawer
+  (function(){
+    var hb=document.getElementById('hamburger'), tin=document.getElementById('topbarIn'); if(!hb||!tin) return;
+    function setOpen(open){
+      tin.classList.toggle('menu-open',open);
+      hb.setAttribute('aria-expanded',open?'true':'false');
+    }
+    hb.addEventListener('click',function(){ setOpen(!tin.classList.contains('menu-open')); });
+    tin.querySelectorAll('.tnav a').forEach(function(a){ a.addEventListener('click',function(){ setOpen(false); }); });
+  })();
+
+  // scrollspy: highlight the nav link for the section currently in view
+  var links=Array.prototype.slice.call(document.querySelectorAll('.side nav a[data-t]'));
+  var sel=document.getElementById('sideSelect');
+  var map={};
+  links.forEach(function(a){ var id=a.getAttribute('href').slice(1); map[id]=a; });
+  var secs=Object.keys(map).map(function(id){return document.getElementById(id);}).filter(Boolean);
+  function clear(){ links.forEach(function(a){a.classList.remove('active');}); }
+  function markActive(id){ clear(); if(map[id]) map[id].classList.add('active'); if(sel && sel.value!==id) sel.value=id; }
+  // mobile dropdown: jump to the chosen section
+  if(sel) sel.addEventListener('change',function(){
+    var t=document.getElementById(sel.value);
+    if(t) t.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  if('IntersectionObserver' in window){
+    var visible={};
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ visible[en.target.id]=en.isIntersecting?en.intersectionRatio:0; });
+      var best=null,br=0;
+      secs.forEach(function(s){ var r=visible[s.id]||0; if(r>br){br=r; best=s.id;} });
+      if(best){ markActive(best); }
+    },{rootMargin:'-15% 0px -70% 0px', threshold:[0,.25,.5,1]});
+    secs.forEach(function(s){ io.observe(s); });
+  }
+  // FAQ deep links (the app's swap note links #faq-buy, and every answer has its own id): open the answer a hash
+  // names, so the jump lands on text rather than on a closed row.
+  function openFromHash(){
+    var id=''; try{ id=decodeURIComponent((location.hash||'').slice(1)); }catch(e){ id=''; }
+    if(!id) return;
+    var el=document.getElementById(id); if(!el) return;
+    if(el.tagName==='DETAILS'){ el.open=true; }
+    else if(el.classList && el.classList.contains('faq-group')){
+      var nx=el.nextElementSibling; if(nx && nx.tagName==='DETAILS') nx.open=true; // first answer of the group
+    }
+  }
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
+  // also set active on click immediately
+  links.forEach(function(a){ a.addEventListener('click',function(){ markActive(a.getAttribute('href').slice(1)); }); });
+  if(links[0]) markActive(links[0].getAttribute('href').slice(1));
+})();
+</script>
+</body>
+</html>

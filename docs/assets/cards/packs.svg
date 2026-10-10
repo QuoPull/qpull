@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180" role="img" aria-label="Sealed packs reveal a tier; the daily raffle pays tier buckets of 45, 25, 20 and 10 percent">
+  <rect x="1" y="1" width="318" height="178" rx="12" fill="#E6E4DC" stroke="#C9C5B8"/>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#14161A" text-anchor="middle">
+    <rect x="34" y="26" width="36" height="50" rx="5" fill="#F3F1EB" stroke="#14161A"/>
+    <rect x="86" y="26" width="36" height="50" rx="5" fill="#F3F1EB" stroke="#14161A"/>
+    <rect x="138" y="26" width="36" height="50" rx="5" fill="#D6321F" stroke="#D6321F"/>
+    <rect x="190" y="26" width="36" height="50" rx="5" fill="#F3F1EB" stroke="#14161A"/>
+    <rect x="242" y="26" width="36" height="50" rx="5" fill="#F3F1EB" stroke="#14161A"/>
+    <text x="156" y="55" fill="#F3F1EB" font-weight="700">WIN</text>
+    <text x="160" y="96" fill="#5C5C57">daily draw, tier buckets</text>
+    <rect x="24" y="108" width="122" height="22" fill="#14161A"/>
+    <rect x="146" y="108" width="68" height="22" fill="#5C5C57"/>
+    <rect x="214" y="108" width="54" height="22" fill="#918D80"/>
+    <rect x="268" y="108" width="28" height="22" fill="#C9C5B8"/>
+    <text x="85" y="123" fill="#F3F1EB">SR 45%</text>
+    <text x="180" y="123" fill="#F3F1EB">R 25%</text>
+    <text x="241" y="123" fill="#F3F1EB">U 20%</text>
+    <text x="282" y="148">C 10%</text>
+  </g>
+</svg>

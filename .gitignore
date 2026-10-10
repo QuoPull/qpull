@@ -1,0 +1,27 @@
+# Build output and fetched dependencies (./.github/install-deps.sh fetches lib/)
+out/
+cache/
+lib/
+broadcast/
+node_modules/
+
+# Secrets: only the *.example env files are tracked
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+!**/.env.*.example
+
+# Runtime state and logs
+bot/state.json
+bot/state.json.tmp
+bot/drawbot.out
+bot/resultcard.html
+bot/resultcard.png
+*.log
+
+# Local tooling
+web/.vercel/
+.DS_Store

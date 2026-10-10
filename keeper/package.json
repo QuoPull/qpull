@@ -1,0 +1,16 @@
+{
+  "name": "qpull-keeper",
+  "version": "1.0.0",
+  "description": "Keeper bot that triggers QPULL's periodic on-chain jobs (draws, distribute, convert).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node keeper.js",
+    "once": "node keeper.js --once"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.6.0",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0"
+  }
+}

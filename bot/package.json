@@ -1,0 +1,19 @@
+{
+  "name": "qpull-drawbot",
+  "private": true,
+  "type": "module",
+  "description": "Read-only: watches the three prize engines and posts one summary per draw to X.",
+  "main": "drawbot.js",
+  "scripts": {
+    "start": "node drawbot.js",
+    "once": "node drawbot.js --once",
+    "backfill": "node drawbot.js --backfill"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
