@@ -56,7 +56,12 @@ const dayKey = (tsSeconds) => new Intl.DateTimeFormat("en-CA", {
       blocks can never double-post, and a lost lastBlock only costs a re-scan, not a duplicate. ── */
 function loadState() {
   if (!existsSync(STATE_FILE)) return { lastBlock: 0, posted: {}, claims: {}, digested: {} };
-  try { const st = JSON.parse(readFileSync(STATE_FILE, "utf8")); st.claims ??= {}; st.digested ??= {}; return st; }
+  try {
+    const st = JSON.parse(readFileSync(STATE_FILE, "utf8"));
+    st.claims ??= {}; st.digested ??= {};
+    st.drawBlock ??= st.lastBlock; // the draws' own cursor, held back while a post is owed (see pass)
+    return st;
+  }
   catch (e) { log(`state file unreadable (${e.message}), starting fresh`); return { lastBlock: 0, posted: {}, claims: {}, digested: {} }; }
 }
 function saveState(s) {
@@ -177,7 +182,8 @@ function compose(src, periodId, pot, winners, txHash, tsSeconds, unclaimed = 0n)
   ];
   // Whatever was not distributed stays in the vault for the next period. Say where it went, with the
   // reason that actually applies to THIS engine, rather than let pot and payout look like a discrepancy.
-  if (unclaimed > 0n) lines.push(`${fmt(unclaimed)} stayed in the vault: ${src.roll}.`, ``);
+  // A few wei of rounding dust would print as "0.0000 stayed", which reads like a mistake: skip it.
+  if (unclaimed > 0n && fmt(unclaimed) !== fmt(0n)) lines.push(`${fmt(unclaimed)} stayed in the vault: ${src.roll}.`, ``);
   lines.push(`Paid from the prize vault, funded by trading activity. Winners claim onchain.`);
   if (INCLUDE_LINK) lines.push(`${EXPLORER}/tx/${txHash}`);
   return lines.join("\n");
@@ -274,17 +280,33 @@ async function main() {
     log(`no prior state: starting at block ${state.lastBlock}${BACKFILL ? " (backfill)" : ""}`);
     saveState(state); // anchor it now: pass() returns early when head == lastBlock and would not save
   }
+  state.drawBlock ??= state.lastBlock;
+  // One-shot recovery: re-scan the draws from this block, posting any that were never announced (still subject to
+  // MAX_AGE_HOURS, and never twice: `posted` is checked first). For a post lost before the retry fix below.
+  const rescan = Number(env("RESCAN_FROM_BLOCK", "0"));
+  if (rescan > 0 && rescan - 1 < state.drawBlock) {
+    state.drawBlock = rescan - 1;
+    log(`RESCAN_FROM_BLOCK=${rescan}: re-scanning draws from there (already-posted draws are skipped)`);
+  }
 
   async function pass() {
     head = await provider.getBlockNumber();
-    if (head <= state.lastBlock) return;
+    if (head <= state.lastBlock && head <= state.drawBlock) return;
+    // The draws' cursor only moves past a draw once it is announced (or recorded as skipped). It used to advance to
+    // `head` whatever happened, so a post that failed (X credits ran out, 2026-10-11) or a getLogs that errored was
+    // never looked at again, despite the "retried next pass" comment. Re-scanning is safe: `posted` dedupes.
+    let drawHold = head;
     for (const s of live) {
       const topic = s.iface.getEvent(s.iface.fragments[0].name).topicHash;
-      for (let from = state.lastBlock + 1; from <= head; from += CHUNK) {
+      for (let from = state.drawBlock + 1; from <= head; from += CHUNK) {
         const to = Math.min(from + CHUNK - 1, head);
         let logs = [];
         try { logs = await provider.getLogs({ address: s.addr, topics: [topic], fromBlock: from, toBlock: to }); }
-        catch (e) { log(`getLogs ${s.key} ${from}-${to} failed: ${e.shortMessage || e.message}`); continue; }
+        catch (e) {
+          log(`getLogs ${s.key} ${from}-${to} failed: ${e.shortMessage || e.message}`);
+          drawHold = Math.min(drawHold, from - 1); // look at this range again next pass
+          continue;
+        }
         for (const l of logs) {
           const p = s.iface.parseLog(l);
           const periodId = p.args[0].toString();
@@ -321,7 +343,11 @@ async function main() {
             try {
               const r = await postTweet(text, creds);
               log(`posted ${stateKey} as ${r?.data?.id ?? "?"}`);
-            } catch (e) { log(`POST FAILED ${stateKey}: ${e.message}`); continue; } // retried next pass
+            } catch (e) {
+              log(`POST FAILED ${stateKey}: ${e.message} (retried next pass)`);
+              drawHold = Math.min(drawHold, l.blockNumber - 1);
+              continue;
+            }
           }
           state.posted[stateKey] = { block: l.blockNumber, tx: l.transactionHash, at: new Date().toISOString() };
           saveState(state);
@@ -329,13 +355,20 @@ async function main() {
       }
     }
     // ── claim digest ────────────────────────────────────────────────────────────────────────────
+    // Claims are COUNTED, so a range must be read exactly once: on a getLogs error the cursor stops at the last range
+    // read in full, and the rest waits for the next pass (skipping ahead would lose those claims from the digest).
+    let claimHold = head;
     if (claimIface) {
       const topic = claimIface.getEvent("Claimed").topicHash;
       for (let from = state.lastBlock + 1; from <= head; from += CHUNK) {
         const to = Math.min(from + CHUNK - 1, head);
         let logs = [];
         try { logs = await provider.getLogs({ address: CLAIM_MANAGER, topics: [topic], fromBlock: from, toBlock: to }); }
-        catch (e) { log(`getLogs claims ${from}-${to} failed: ${e.shortMessage || e.message}`); continue; }
+        catch (e) {
+          log(`getLogs claims ${from}-${to} failed: ${e.shortMessage || e.message}`);
+          claimHold = from - 1;
+          break;
+        }
         for (const l of logs) {
           let ts = null;
           try { ts = (await provider.getBlock(l.blockNumber))?.timestamp ?? null; } catch { /* skip if unknown */ }
@@ -365,7 +398,8 @@ async function main() {
       }
     }
 
-    state.lastBlock = head;
+    state.lastBlock = Math.max(state.lastBlock, claimHold);
+    state.drawBlock = Math.max(state.drawBlock, drawHold);
     saveState(state);
   }
 
